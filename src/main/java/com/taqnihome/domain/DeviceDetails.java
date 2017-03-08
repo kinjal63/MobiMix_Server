@@ -8,7 +8,7 @@ import java.io.Serializable;
 
 @Entity
 @Table(name = "device")
-public class DeviceDetails implements Serializable{
+public class DeviceDetails implements Serializable {
 	@Id
 	@Column(name = "device_id")
 	private String deviceId;

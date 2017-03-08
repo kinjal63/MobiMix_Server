@@ -1,7 +1,7 @@
 package com.taqnihome.domain;
 
 public class AppData {
-	private long userId;
+	private String userId;
 	private double latitude;
 	private double longitude;
 	private AppDetail[] appDetail;
@@ -18,13 +18,13 @@ public class AppData {
 	public void setLongitude(double longitude) {
 		this.longitude = longitude;
 	}
-	public long getUserId() {
+	public String getUserId() {
 		return userId;
 	}
 	public AppDetail[] getAppDetail() {
 		return appDetail;
 	}
-	public void setUserId(long userId) {
+	public void setUserId(String userId) {
 		this.userId = userId;
 	}
 	public void setAppDetail(AppDetail[] appDetail) {

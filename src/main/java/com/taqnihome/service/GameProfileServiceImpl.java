@@ -20,8 +20,7 @@ import com.taqnihome.domain.UserInput;
 
 @Service
 @Transactional
-public class GameProfileServiceImpl extends
-        GenericServiceImpl<String, GameProfile> implements GameProfileService {
+public class GameProfileServiceImpl implements GameProfileService {
 
     private GameProfileDao gameProfileDao;
 
@@ -31,7 +30,6 @@ public class GameProfileServiceImpl extends
 
     @Autowired
     public GameProfileServiceImpl(GameProfileDao gameProfileDao) {
-        super(gameProfileDao);
         this.gameProfileDao = gameProfileDao;
     }
 
@@ -68,7 +66,7 @@ public class GameProfileServiceImpl extends
 	}
 	
 	@Override
-	public Object getMutualGameList(long userId) {
+	public Object getMutualGameList(String userId) {
 		return gameProfileDao.getMutualGameList(userId);
 	}
 	
@@ -96,11 +94,41 @@ public class GameProfileServiceImpl extends
 	}
 	
 	@Override
-	public Object getMutualGameList(long userId, ArrayList<Long> userIds) {
+	public Object getMutualGameList(String userId, ArrayList<String> userIds) {
 		return gameProfileDao.getMutualGames(userId, userIds);
 	}
 	
-	public void addUserAvailabilityTime(long userId, String fromTime, String toTime) {
+	public void addUserAvailabilityTime(String userId, String fromTime, String toTime) {
 		gameProfileDao.addUserAvailabilityTime(userId, fromTime, toTime);
+	}
+
+	@Override
+	public GameProfile save(GameProfile entity) throws Exception {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void delete(GameProfile entity) throws Exception {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public GameProfile getById(String key) throws Exception {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public List<GameProfile> getAll() throws Exception {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void delete(String pk) throws Exception {
+		// TODO Auto-generated method stub
+		
 	}
 }

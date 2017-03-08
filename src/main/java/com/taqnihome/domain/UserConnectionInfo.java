@@ -3,8 +3,8 @@ package com.taqnihome.domain;
 import java.util.ArrayList;
 
 public class UserConnectionInfo {
-	private long userId;
-	private ArrayList<Long> remoteUserIds;
+	private String userId;
+	private ArrayList<String> remoteUserIds;
 	private String wifiDeviceAddress;
 	
 	public String getWifiDeviceAddress() {
@@ -13,16 +13,16 @@ public class UserConnectionInfo {
 	public void setWifiDeviceAddress(String wifiDeviceAddress) {
 		this.wifiDeviceAddress = wifiDeviceAddress;
 	}
-	public long getUserId() {
+	public String getUserId() {
 		return userId;
 	}
-	public ArrayList<Long> getRemoteUserIds() {
+	public ArrayList<String> getRemoteUserIds() {
 		return remoteUserIds;
 	}
-	public void setUserId(long userId) {
+	public void setUserId(String userId) {
 		this.userId = userId;
 	}
-	public void setRemoteUserIds(ArrayList<Long> remoteUserIds) {
+	public void setRemoteUserIds(ArrayList<String> remoteUserIds) {
 		this.remoteUserIds = remoteUserIds;
 	}
 }

@@ -1,7 +1,7 @@
 package com.taqnihome.domain;
 
 public class UserAvailablity{
-	private long userId;
+	private String userId;
 	private int availablity;
 	private long latitude;
 	private long longitude;
@@ -18,13 +18,13 @@ public class UserAvailablity{
 	public void setLongitude(long longitude) {
 		this.longitude = longitude;
 	}
-	public long getUserId() {
+	public String getUserId() {
 		return userId;
 	}
 	public int getAvailablity() {
 		return availablity;
 	}
-	public void setUserId(long userId) {
+	public void setUserId(String userId) {
 		this.userId = userId;
 	}
 	public void setAvailablity(int availablity) {

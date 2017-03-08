@@ -20,12 +20,12 @@ public interface GameProfileService extends GenericService<String, GameProfile> 
     void saveAppData(AppData appData);
     void addGameInfo(GameData gameData);
 	void updateUserAvailablity(UserAvailablity availablity);
-	Object getMutualGameList(long userId);
+	Object getMutualGameList(String userId);
 	Object getGameList();
 	void editGame(GameData gameData);
 	void deleteGame(long gameId);
 	void sendConnectionInvite(UserConnectionInfo userConnectionInfo);
 	void sendRemoteUserInput(UserInput userInput);
-	Object getMutualGameList(long userId, ArrayList<Long> userIds);
-	void addUserAvailabilityTime(long userId, String fromTime, String toTime);
+	Object getMutualGameList(String userId, ArrayList<String> userIds);
+	void addUserAvailabilityTime(String userId, String fromTime, String toTime);
 }

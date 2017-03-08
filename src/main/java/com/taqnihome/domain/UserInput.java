@@ -1,7 +1,7 @@
 package com.taqnihome.domain;
 
 public class UserInput {
-	private long userId;
+	private String userId;
 	private long toUserId;
 	private String bluetoothAddress;
 //	private String wifiAddress;
@@ -16,13 +16,13 @@ public class UserInput {
 	public boolean isAccept() {
 		return accept;
 	}
-	public long getUserId() {
+	public String getUserId() {
 		return userId;
 	}
 	public long getToUserId() {
 		return toUserId;
 	}
-	public void setFromUserId(long userId) {
+	public void setFromUserId(String userId) {
 		this.userId = userId;
 	}
 	public void setToUserId(long toUserId) {

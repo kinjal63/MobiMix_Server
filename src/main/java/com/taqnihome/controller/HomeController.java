@@ -1,11 +1,14 @@
 
 package com.taqnihome.controller;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -13,25 +16,9 @@ import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
 
-import com.google.android.gcm.server.InvalidRequestException;
-import com.google.android.gcm.server.Message;
-import com.google.android.gcm.server.Result;
-import com.google.android.gcm.server.Sender;
-import com.taqnihome.domain.*;
-import com.taqnihome.service.*;
-
-import org.arpit.java2blog.model.AppData;
-import org.arpit.java2blog.model.GameData;
-import org.arpit.java2blog.model.GameInfo;
-import org.arpit.java2blog.model.ResponseGame;
-import org.arpit.java2blog.model.UserAvailablity;
-import org.arpit.java2blog.model.UserConnectionInfo;
-import org.arpit.java2blog.model.UserInfo;
-import org.arpit.java2blog.model.UserInput;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -41,6 +28,28 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
+import com.taqnihome.domain.AppData;
+import com.taqnihome.domain.DeviceDetails;
+import com.taqnihome.domain.GameCategory;
+import com.taqnihome.domain.GameData;
+import com.taqnihome.domain.GameInfo;
+import com.taqnihome.domain.GameLibrary;
+import com.taqnihome.domain.GameProfile;
+import com.taqnihome.domain.GameProfileTimeDetails;
+import com.taqnihome.domain.ResponseGame;
+import com.taqnihome.domain.User;
+import com.taqnihome.domain.UserAdmin;
+import com.taqnihome.domain.UserAvailablity;
+import com.taqnihome.domain.UserConnectionInfo;
+import com.taqnihome.domain.UserInfo;
+import com.taqnihome.domain.UserInput;
+import com.taqnihome.service.DeviceDetailsService;
+import com.taqnihome.service.GameCategoryService;
+import com.taqnihome.service.GameLibraryService;
+import com.taqnihome.service.GameProfileService;
+import com.taqnihome.service.GameProfileTimeDetailsService;
+import com.taqnihome.service.UserAdminService;
+import com.taqnihome.service.UserService;
 import com.taqnihome.utils.Generator;
 
 @RestController
@@ -757,7 +766,7 @@ public class HomeController {
 	public
 	@ResponseBody
 	Object saveAppData(@RequestBody AppData appData, HttpServletRequest httpSerfvletRequest ) {
-		rssiService.saveAppData(appData);
+		gameProfileService.saveAppData(appData);
 		return "App data are logged for userid : ";
 	}
 	
@@ -784,7 +793,7 @@ public class HomeController {
 		gameData.setMinPlayers(minPlayers);
 		gameData.setMaxPlayers(maxPlayers);
 		
-		rssiService.addGameInfo(gameData);
+		gameProfileService.addGameInfo(gameData);
 		return "Game Data is inserted : ";
 	}
 	
@@ -792,15 +801,15 @@ public class HomeController {
 	public
 	@ResponseBody
 	Object updateUserAvailablity(@RequestBody UserAvailablity availablity, HttpServletRequest httpSerfvletRequest ) {
-		rssiService.updateUserAvailablity(availablity);
+		gameProfileService.updateUserAvailablity(availablity);
 		return "App data are logged for userid : ";
 	}
 	
 	@RequestMapping(value = "/getNearByGameList", method = RequestMethod.POST)
 	public @ResponseBody
-	Object getMutualGameList(@RequestParam("user_id") long userId, HttpServletRequest httpSerfvletRequest) {
+	Object getMutualGameList(@RequestParam("user_id") String userId, HttpServletRequest httpSerfvletRequest) {
 		UserInfo userInfo = new UserInfo();
-		userInfo.setUserDetails(rssiService.getMutualGameList(userId));
+		userInfo.setUserDetails(gameProfileService.getMutualGameList(userId));
 		return userInfo;
 	}
 	
@@ -808,7 +817,7 @@ public class HomeController {
 	public @ResponseBody
 	Object getGameList(HttpServletRequest httpSerfvletRequest) {
 		GameInfo gameInfo = new GameInfo();
-		gameInfo.setGameDetails(rssiService.getGameList());
+		gameInfo.setGameDetails(gameProfileService.getGameList());
 		return gameInfo;
 	}
 	
@@ -837,27 +846,27 @@ public class HomeController {
 		gameData.setMinPlayers(minPlayers);
 		gameData.setMaxPlayers(maxPlayers);
 		
-		rssiService.editGame(gameData);
+		gameProfileService.editGame(gameData);
 		return "Game Data is inserted : ";
 	}
 	
 	@RequestMapping(value = "/deleteGame", method = RequestMethod.POST)
 	public @ResponseBody
 	Object deleteGame(@RequestParam("gameId") long gameId, HttpServletRequest httpSerfvletRequest) {
-		rssiService.deleteGame(gameId);
+		gameProfileService.deleteGame(gameId);
 		return "Game is deleted.";
 	}
 	
 	@RequestMapping(value = "/sendConnectionInvite", method = RequestMethod.POST)
 	public @ResponseBody
 	Object sendConnectionInvite(@RequestBody UserConnectionInfo userConnectionInfo, HttpServletRequest httpSerfvletRequest) {
-		rssiService.sendConnectionInvite(userConnectionInfo);
+		gameProfileService.sendConnectionInvite(userConnectionInfo);
 		return "Invitation is sent.";
 	}
 	
 	@RequestMapping(value = "/sendRemoteUserInput", method = RequestMethod.POST)
 	public @ResponseBody
-	Object sendRemoteUserInput(@RequestParam("userId") long userId, @RequestParam("toUserId") long toUserId,
+	Object sendRemoteUserInput(@RequestParam("userId") String userId, @RequestParam("toUserId") long toUserId,
 			@RequestParam("bluetoothAddress") String bluetoothAddress,
 			@RequestParam("accept") boolean accept, HttpServletRequest httpSerfvletRequest) {
 		UserInput userInput = new UserInput();
@@ -866,7 +875,7 @@ public class HomeController {
 		userInput.setBluetoothAddress(bluetoothAddress);
 		userInput.setAccept(accept);
 		
-		rssiService.sendRemoteUserInput(userInput);
+		gameProfileService.sendRemoteUserInput(userInput);
 		return "Invitation is sent.";
 	}
 	
@@ -875,17 +884,17 @@ public class HomeController {
 	Object getMutualGames(@RequestBody UserConnectionInfo userConnectionInfo,
 			HttpServletRequest httpSerfvletRequest) {
 		ResponseGame resGame = new ResponseGame();
-		resGame.setUserDetails(rssiService.getMutualGameList(userConnectionInfo.getUserId(), userConnectionInfo.getRemoteUserIds()));
+		resGame.setUserDetails(gameProfileService.getMutualGameList(userConnectionInfo.getUserId(), userConnectionInfo.getRemoteUserIds()));
 		
 		return resGame;
 	}
 	
 	@RequestMapping(value = "/addUserTime", method = RequestMethod.POST)
 	public @ResponseBody
-	Object addUserTime(@RequestParam("userId") long userId, @RequestParam("fromTime") String fromTime,
+	Object addUserTime(@RequestParam("userId") String userId, @RequestParam("fromTime") String fromTime,
 			@RequestParam("toTime") String toTime,
 			HttpServletRequest httpSerfvletRequest) {
-		rssiService.addUserAvailabilityTime(userId, fromTime, toTime);
+		gameProfileService.addUserAvailabilityTime(userId, fromTime, toTime);
 		
 		return "Time entry is added.";
 	}
@@ -909,35 +918,6 @@ public class HomeController {
         cal.setTime(date);
         return cal;
     }
-
-
-    public void sendPushNotifications(List<User> userList) {
-
-
-        Sender sender = new Sender("AIzaSyCVSSyru-nFzE-II_8Hr8jc6sBpiK8--NI");
-        Message msg = new Message.Builder().build();
-        Message msg2 = new Message.Builder().addData("message", "Something New for You").build();
-        List<DeviceDetails> dd = new ArrayList<DeviceDetails>();
-
-        for (User userDetails : userList)
-            try {
-
-                Result result = sender.send(msg2, userDetails.getUserDeviceDetailses().get(0).getPushToken(), 3);
-
-                if (StringUtils.isEmpty(result.getErrorCodeName())) {
-                    System.out.println(msg2.toString() + "GCM Notification is sent successfully" + result.toString());
-
-                } else
-                    System.out.println("Error occurred while sending push notification :" + result.getErrorCodeName());
-
-            } catch (InvalidRequestException e) {
-                System.out.println("Invalid Request");
-            } catch (IOException e) {
-                System.out.println("IO Exception");
-            }
-
-    }
-
 
     public User updateGameProfileUserProfile(String userId, List<String> installedPackageName) {
 

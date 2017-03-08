@@ -1,9 +1,6 @@
 package com.taqnihome.dao;
-
 import java.util.ArrayList;
 import java.util.List;
-
-import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.taqnihome.domain.AppData;
 import com.taqnihome.domain.GameData;
@@ -23,14 +20,14 @@ public interface GameProfileDao {
     void saveAppData(AppData appData);
 	void addGameInfo(GameData gameData);
 	void updateUserAvailablity(UserAvailablity availablity);
-	Object getMutualGameList(long userId);
+	Object getMutualGameList(String userId);
 	Object getGameList();
 	void editGame(GameData gameData);
 	void deleteGame(long gameId);
 	void sendConnectionInvite(UserConnectionInfo userConnectionInfo);
 	void sendRemoteUserInput(UserInput userInput);
-	Object getMutualGames(long userId, ArrayList<Long> userIds);
-	void addUserAvailabilityTime(long userId, String fromTime, String toTime);
+	Object getMutualGames(String userId, ArrayList<String> userIds);
+	void addUserAvailabilityTime(String userId, String fromTime, String toTime);
 	
 	//cron job functions
 	void updateAndNotifyNearByUsers();
