@@ -13,5 +13,5 @@ public interface UserService extends GenericService<String, User> {
 	User findByEmailAndPassword(String email, String password);
 	User findByMacAddress(String macAddress);
 	List<User> findByLocation(Double latitude, Double longitude);
-	List<User> findDistinctIdByIdInAndGameProfileTime_GameProfileStartTimeLessThanEqualAndGameProfileTime_GameProfileEndTimeGreaterThanEqual(List<String> user_id,long gameProfileStartTime, long gameProfileEndTime);
+//	List<User> findDistinctIdByIdInAndGameProfileTime_GameProfileStartTimeLessThanEqualAndGameProfileTime_GameProfileEndTimeGreaterThanEqual(List<String> user_id,long gameProfileStartTime, long gameProfileEndTime);
 }

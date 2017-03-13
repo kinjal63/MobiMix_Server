@@ -16,8 +16,11 @@ import java.util.Map;
 import javax.sql.DataSource;
 
 import org.hibernate.SessionFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
@@ -37,13 +40,14 @@ import com.taqnihome.model.db.NearByUserDBModel;
 import com.taqnihome.model.mapper.NearByUserRowMapper;
 import com.taqnihome.utils.NotificationUtil;
 
+@Service
+@Transactional
 public class GameProfileDaoImpl implements GameProfileDao {
-	
-	private SessionFactory sessionFactory;
 	private Cloudinary cloudinary;
 	private DataSource dataSource;
 	private JdbcTemplate jdbcTemplateObject;
 
+	@Autowired
 	public void setDataSource(DataSource dataSource) {
 		this.dataSource = dataSource;
 		this.jdbcTemplateObject = new JdbcTemplate(dataSource);
@@ -51,29 +55,24 @@ public class GameProfileDaoImpl implements GameProfileDao {
 		cloudinary = new Cloudinary(ObjectUtils.asMap("cloud_name", "dmffogznf", "api_key", "593785351395324",
 				"api_secret", "NhoJNHlIl0yhNzlcB1XAmcS7_Ak"));
 	}
-
-
-	public GameProfileDaoImpl(SessionFactory sessionFactory) {
-		this.sessionFactory = sessionFactory;
-	}
 	
-	@Override
-	public List<String> findByUserIdAndGameLibraryPackageNameNotIn(User user, List<String> packageNameList) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public List<GameProfile> findByGameLibrary(GameLibrary gameLibrary) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public GameProfile removeByGameProfileId(String gameProfileId) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+//	@Override
+//	public List<String> findByUserIdAndGameLibraryPackageNameNotIn(User user, List<String> packageNameList) {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
+//
+//	@Override
+//	public List<GameProfile> findByGameLibrary(GameLibrary gameLibrary) {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
+//
+//	@Override
+//	public GameProfile removeByGameProfileId(String gameProfileId) {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
 	
 	@Override
 	public void sendConnectionInvite(UserConnectionInfo userConnectionInfo) {
@@ -129,7 +128,7 @@ public class GameProfileDaoImpl implements GameProfileDao {
 	@Override
 	public void saveAppData(AppData appData) {
 		String sql = "insert into game_profile (user_id, game_id) ";
-		String sql1 = "(select " + appData.getUserId() + ", id from game_library where game_package_name in (";
+		String sql1 = "(select '" + appData.getUserId() + "', id from game_library where game_package_name in (";
 		String whereIn = "";
 		for (int j = 0; j < appData.getAppDetail().length; j++) {
 			if (j != appData.getAppDetail().length - 1) {
@@ -483,6 +482,9 @@ public class GameProfileDaoImpl implements GameProfileDao {
 	}
 	
 	private void disableUserAvailability(List<String> userIds) {
+		if( userIds.size() <= 0 ) {
+			return;
+		}
 		String whereIn = "";
 		for (int i = 0; i < userIds.size(); i++) {
 			if (i != userIds.size() - 1) {

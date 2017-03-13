@@ -78,13 +78,13 @@ public class User implements Serializable {
         this.longitude = longitude;
     }
 
-    @OneToMany(mappedBy = "userId", cascade = CascadeType.ALL, orphanRemoval = true)
-    @LazyCollection(LazyCollectionOption.FALSE)
-    private List<GameProfile> gameProfiles;
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    @LazyCollection(LazyCollectionOption.FALSE)
-    private List<GameProfileTimeDetails> gameProfileTime;
+//    @OneToMany(mappedBy = "userId", cascade = CascadeType.ALL, orphanRemoval = true)
+//    @LazyCollection(LazyCollectionOption.FALSE)
+//    private List<GameProfile> gameProfiles;
+//
+//    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+//    @LazyCollection(LazyCollectionOption.FALSE)
+//    private List<GameProfileTimeDetails> gameProfileTime;
 
 
     @ManyToMany
@@ -111,14 +111,14 @@ public class User implements Serializable {
         this.userDeviceDetailses = userDeviceDetailses;
     }
 
-    public List<GameProfile> getGameProfiles() {
-        return gameProfiles;
-    }
-
-    public void setGameProfiles(List<GameProfile> gameProfiles) {
-        this.gameProfiles = gameProfiles;
-
-    }
+//    public List<GameProfile> getGameProfiles() {
+//        return gameProfiles;
+//    }
+//
+//    public void setGameProfiles(List<GameProfile> gameProfiles) {
+//        this.gameProfiles = gameProfiles;
+//
+//    }
 
     public Long getCreationDate() {
         return creationDate;
@@ -196,13 +196,13 @@ public class User implements Serializable {
         return endTime;
     }
 
-    public List<GameProfileTimeDetails> getGameProfileTime() {
-        return gameProfileTime;
-    }
-
-    public void setGameProfileTime(List<GameProfileTimeDetails> gameProfileTime) {
-        this.gameProfileTime = gameProfileTime;
-    }
+//    public List<GameProfileTimeDetails> getGameProfileTime() {
+//        return gameProfileTime;
+//    }
+//
+//    public void setGameProfileTime(List<GameProfileTimeDetails> gameProfileTime) {
+//        this.gameProfileTime = gameProfileTime;
+//    }
 
     public void setEndTime(Long endTime) {
         this.endTime = endTime;

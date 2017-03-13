@@ -12,11 +12,11 @@ import com.taqnihome.domain.UserAvailablity;
 import com.taqnihome.domain.UserConnectionInfo;
 import com.taqnihome.domain.UserInput;
 
-public interface GameProfileService extends GenericService<String, GameProfile> {
+public interface GameProfileService /* extends GenericService<String, GameProfile>*/ {
 
-    List<String> findByUserIdAndGameLibraryPackageNameNotIn(User user, List<String> packageNameList);
-    List<GameProfile> findByGameLibrary(GameLibrary gameLibrary);
-    GameProfile removeByGameProfileId(String gameProfileId);
+//    List<String> findByUserIdAndGameLibraryPackageNameNotIn(User user, List<String> packageNameList);
+//    List<GameProfile> findByGameLibrary(GameLibrary gameLibrary);
+//    GameProfile removeByGameProfileId(String gameProfileId);
     void saveAppData(AppData appData);
     void addGameInfo(GameData gameData);
 	void updateUserAvailablity(UserAvailablity availablity);

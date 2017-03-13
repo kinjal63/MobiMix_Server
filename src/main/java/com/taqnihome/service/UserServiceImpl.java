@@ -50,8 +50,8 @@ public class UserServiceImpl extends GenericServiceImpl<String, User>
         return userDataDao.findByLocation(latitude, longitude);
     }
 
-    @Override
-    public List<User> findDistinctIdByIdInAndGameProfileTime_GameProfileStartTimeLessThanEqualAndGameProfileTime_GameProfileEndTimeGreaterThanEqual(List<String> user_id, long gameProfileStartTime, long gameProfileEndTime) {
-        return userDataDao.findDistinctIdByIdInAndGameProfileTime_GameProfileStartTimeLessThanEqualAndGameProfileTime_GameProfileEndTimeGreaterThanEqual(user_id, gameProfileStartTime, gameProfileEndTime);
-    }
+//    @Override
+//    public List<User> findDistinctIdByIdInAndGameProfileTime_GameProfileStartTimeLessThanEqualAndGameProfileTime_GameProfileEndTimeGreaterThanEqual(List<String> user_id, long gameProfileStartTime, long gameProfileEndTime) {
+//        return userDataDao.findDistinctIdByIdInAndGameProfileTime_GameProfileStartTimeLessThanEqualAndGameProfileTime_GameProfileEndTimeGreaterThanEqual(user_id, gameProfileStartTime, gameProfileEndTime);
+//    }
 }

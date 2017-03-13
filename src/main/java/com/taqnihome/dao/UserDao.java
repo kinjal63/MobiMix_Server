@@ -22,6 +22,6 @@ public interface UserDao extends JpaRepository<User, String>, UserDaoCustom {
             "FROM taqnihome_user user HAVING distance < 4 ORDER BY distance", nativeQuery = true)
     List<User> findByLocation(Double latitude, Double longitude);
 
-    List<User> findDistinctIdByIdInAndGameProfileTime_GameProfileStartTimeLessThanEqualAndGameProfileTime_GameProfileEndTimeGreaterThanEqual(List<String> user_id,long gameProfileStartTime, long gameProfileEndTime);
+//    List<User> findDistinctIdByIdInAndGameProfileTime_GameProfileStartTimeLessThanEqualAndGameProfileTime_GameProfileEndTimeGreaterThanEqual(List<String> user_id,long gameProfileStartTime, long gameProfileEndTime);
 
 }

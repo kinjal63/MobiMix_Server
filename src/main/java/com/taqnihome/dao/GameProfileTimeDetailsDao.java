@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 /**
  * Created by songline on 21/12/16.
  */
-public interface GameProfileTimeDetailsDao extends JpaRepository<GameProfileTimeDetails, String> {
+public interface GameProfileTimeDetailsDao /*extends JpaRepository<GameProfileTimeDetails, String>*/ {
 
-        GameProfileTimeDetails findByGameProfileTimeScheduleAndUser_Id(String gameProfileTimeSchedule,String id);
+//        GameProfileTimeDetails findByGameProfileTimeScheduleAndUser_Id(String gameProfileTimeSchedule,String id);
 }

@@ -1,21 +1,17 @@
 package com.taqnihome.dao;
 import java.util.ArrayList;
-import java.util.List;
 
 import com.taqnihome.domain.AppData;
 import com.taqnihome.domain.GameData;
-import com.taqnihome.domain.GameLibrary;
-import com.taqnihome.domain.GameProfile;
-import com.taqnihome.domain.User;
 import com.taqnihome.domain.UserAvailablity;
 import com.taqnihome.domain.UserConnectionInfo;
 import com.taqnihome.domain.UserInput;
 
 public interface GameProfileDao {
 
-    List<String>  findByUserIdAndGameLibraryPackageNameNotIn(User user, List<String> packageNameList);
-    List<GameProfile> findByGameLibrary(GameLibrary gameLibrary);
-    GameProfile removeByGameProfileId(String gameProfileId);
+//    List<String>  findByUserIdAndGameLibraryPackageNameNotIn(User user, List<String> packageNameList);
+//    List<GameProfile> findByGameLibrary(GameLibrary gameLibrary);
+//    GameProfile removeByGameProfileId(String gameProfileId);
 
     void saveAppData(AppData appData);
 	void addGameInfo(GameData gameData);

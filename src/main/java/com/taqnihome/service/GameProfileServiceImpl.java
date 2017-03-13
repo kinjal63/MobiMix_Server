@@ -34,21 +34,21 @@ public class GameProfileServiceImpl implements GameProfileService {
     }
 
 
-    @Override
-    public List<String> findByUserIdAndGameLibraryPackageNameNotIn(User user, List<String> packageNameList) {
-        return gameProfileDao.findByUserIdAndGameLibraryPackageNameNotIn(user, packageNameList);
-    }
-
-
-    @Override
-    public GameProfile removeByGameProfileId(String gameProfileId) {
-        return gameProfileDao.removeByGameProfileId(gameProfileId);
-    }
-
-    @Override
-    public List<GameProfile> findByGameLibrary(GameLibrary gameLibrary) {
-        return gameProfileDao.findByGameLibrary(gameLibrary);
-    }
+//    @Override
+//    public List<String> findByUserIdAndGameLibraryPackageNameNotIn(User user, List<String> packageNameList) {
+//        return gameProfileDao.findByUserIdAndGameLibraryPackageNameNotIn(user, packageNameList);
+//    }
+//
+//
+//    @Override
+//    public GameProfile removeByGameProfileId(String gameProfileId) {
+//        return gameProfileDao.removeByGameProfileId(gameProfileId);
+//    }
+//
+//    @Override
+//    public List<GameProfile> findByGameLibrary(GameLibrary gameLibrary) {
+//        return gameProfileDao.findByGameLibrary(gameLibrary);
+//    }
     
     @Override
 	public void saveAppData(AppData appData) {
@@ -100,35 +100,5 @@ public class GameProfileServiceImpl implements GameProfileService {
 	
 	public void addUserAvailabilityTime(String userId, String fromTime, String toTime) {
 		gameProfileDao.addUserAvailabilityTime(userId, fromTime, toTime);
-	}
-
-	@Override
-	public GameProfile save(GameProfile entity) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void delete(GameProfile entity) throws Exception {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public GameProfile getById(String key) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public List<GameProfile> getAll() throws Exception {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void delete(String pk) throws Exception {
-		// TODO Auto-generated method stub
-		
 	}
 }

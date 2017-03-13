@@ -13,22 +13,22 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
-public class GameProfileTimeDetailsServiceImpl extends GenericServiceImpl<String, GameProfileTimeDetails> implements GameProfileTimeDetailsService {
+public class GameProfileTimeDetailsServiceImpl /*extends GenericServiceImpl<String, GameProfileTimeDetails>*/ implements GameProfileTimeDetailsService {
 
-    private GameProfileTimeDetailsDao gameProfileTimeDetailsDao;
+//    private GameProfileTimeDetailsDao gameProfileTimeDetailsDao;
+//
+//    public GameProfileTimeDetailsServiceImpl() {
+//        // TODO Auto-generated constructor stub
+//    }
+//
+//    @Autowired
+//    public GameProfileTimeDetailsServiceImpl(GameProfileTimeDetailsDao gameProfileTimeDetailsDao) {
+////        super(gameProfileTimeDetailsDao);
+//        this.gameProfileTimeDetailsDao = gameProfileTimeDetailsDao;
+//    }
 
-    public GameProfileTimeDetailsServiceImpl() {
-        // TODO Auto-generated constructor stub
-    }
-
-    @Autowired
-    public GameProfileTimeDetailsServiceImpl(GameProfileTimeDetailsDao gameProfileTimeDetailsDao) {
-        super(gameProfileTimeDetailsDao);
-        this.gameProfileTimeDetailsDao = gameProfileTimeDetailsDao;
-    }
-
-    @Override
-    public GameProfileTimeDetails findByGameProfileTimeScheduleAndUser_Id(String gameProfileTimeSchedule, String id) {
-        return gameProfileTimeDetailsDao.findByGameProfileTimeScheduleAndUser_Id(gameProfileTimeSchedule, id);
-    }
+//    @Override
+//    public GameProfileTimeDetails findByGameProfileTimeScheduleAndUser_Id(String gameProfileTimeSchedule, String id) {
+//        return gameProfileTimeDetailsDao.findByGameProfileTimeScheduleAndUser_Id(gameProfileTimeSchedule, id);
+//    }
 }
