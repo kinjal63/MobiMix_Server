@@ -1,16 +1,15 @@
 package com.taqnihome.service;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import com.taqnihome.domain.AppData;
+import com.taqnihome.domain.CallDuration;
 import com.taqnihome.domain.GameData;
-import com.taqnihome.domain.GameLibrary;
-import com.taqnihome.domain.GameProfile;
-import com.taqnihome.domain.User;
 import com.taqnihome.domain.UserAvailablity;
 import com.taqnihome.domain.UserConnectionInfo;
+import com.taqnihome.domain.UserDataUsage;
 import com.taqnihome.domain.UserInput;
+import com.taqnihome.domain.UserRSSI;
 
 public interface GameProfileService /* extends GenericService<String, GameProfile>*/ {
 
@@ -19,6 +18,9 @@ public interface GameProfileService /* extends GenericService<String, GameProfil
 //    GameProfile removeByGameProfileId(String gameProfileId);
     void saveAppData(AppData appData);
     void addGameInfo(GameData gameData);
+    public void saveRssi(UserRSSI userRssi);
+	public void saveDataUsage(UserDataUsage dataUsage);
+	public void aggregateCallDuration(CallDuration callDuration);
 	void updateUserAvailablity(UserAvailablity availablity);
 	Object getMutualGameList(String userId);
 	Object getGameList();

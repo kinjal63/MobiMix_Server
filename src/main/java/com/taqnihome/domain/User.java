@@ -37,6 +37,8 @@ public class User implements Serializable {
     @Column(name = "mac_address")
 
     private String macAddress;
+    
+    private String bluetoothName;
     @Column(name = "email")
     private String email;
     @Column(name = "dob")

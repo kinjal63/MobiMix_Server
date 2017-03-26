@@ -13,7 +13,7 @@ public class NearByUserRowMapper implements RowMapper<NearByUserDBModel>{
 	public NearByUserDBModel mapRow(ResultSet rs, int rowNum) throws SQLException {
 		NearByUserDBModel model = new NearByUserDBModel();
 		model.setUserId(rs.getString("user_id"));
-		model.setDeviceToken(rs.getString("device_token"));
+		model.setDeviceToken(rs.getString("push_token"));
 		return model;
 	}
 }

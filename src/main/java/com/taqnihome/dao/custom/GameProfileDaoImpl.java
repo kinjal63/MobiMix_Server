@@ -15,7 +15,6 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
-import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -25,18 +24,19 @@ import org.springframework.transaction.annotation.Transactional;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.taqnihome.dao.GameProfileDao;
+import com.taqnihome.domain.Aggregate;
 import com.taqnihome.domain.AppData;
+import com.taqnihome.domain.CallDuration;
 import com.taqnihome.domain.GameData;
 import com.taqnihome.domain.GameDataModel;
-import com.taqnihome.domain.GameLibrary;
-import com.taqnihome.domain.GameProfile;
-import com.taqnihome.domain.User;
 import com.taqnihome.domain.UserAvailablity;
 import com.taqnihome.domain.UserConnectionInfo;
+import com.taqnihome.domain.UserDataUsage;
 import com.taqnihome.domain.UserGameResponse;
 import com.taqnihome.domain.UserInput;
 import com.taqnihome.domain.UserRSSI;
 import com.taqnihome.model.db.NearByUserDBModel;
+import com.taqnihome.model.mapper.DataUsageMapper;
 import com.taqnihome.model.mapper.NearByUserRowMapper;
 import com.taqnihome.utils.NotificationUtil;
 
@@ -78,14 +78,24 @@ public class GameProfileDaoImpl implements GameProfileDao {
 	public void sendConnectionInvite(UserConnectionInfo userConnectionInfo) {
 		String whereIn = "(";
 		int size = userConnectionInfo.getRemoteUserIds().size();
+		String emailQuery = "select email from taqnihome_user where user_id= '" + userConnectionInfo.getUserId() + "'";
+		
+		String email = (String) jdbcTemplateObject.queryForObject(emailQuery, new RowMapper<String>() {
+			@Override
+			public String mapRow(ResultSet rs, int rowNum) throws SQLException {
+				return rs.getString(1);
+			}
+		});
+		
 
 		for (int i = 0; i < size; i++) {
 			if (i != size - 1) {
-				whereIn += userConnectionInfo.getRemoteUserIds().get(i) + ",";
+				whereIn += "'" + userConnectionInfo.getRemoteUserIds().get(i) + "',";
 			} else {
-				whereIn += userConnectionInfo.getRemoteUserIds().get(i) + ")";
+				whereIn += "'" + userConnectionInfo.getRemoteUserIds().get(i) + "')";
 			}
 		}
+		
 
 		String idQuery = "select d.push_token from taqnihome_user tu join device_details_mapping dm "
 				+ "on tu.user_id = dm.user_id join device d on dm.device_id = d.device_id where tu.user_id in " + whereIn;
@@ -96,12 +106,11 @@ public class GameProfileDaoImpl implements GameProfileDao {
 				return rs.getString(1);
 			}
 		});
-		if( userConnectionInfo.getWifiDeviceAddress() != null ) {
-			NotificationUtil.sendWifiInvitation(userConnectionInfo.getUserId(), 
-					userConnectionInfo.getWifiDeviceAddress(), deviceTokens);	
+		if( userConnectionInfo.getConnectionInvite() == 2 ) {
+			NotificationUtil.sendWifiInvitation(userConnectionInfo.getUserId(), deviceTokens, email);	
 		}
 		else {
-			NotificationUtil.sendBluetoothInvitation(userConnectionInfo.getUserId(), deviceTokens);
+			NotificationUtil.sendBluetoothInvitation(userConnectionInfo.getUserId(), deviceTokens, email);
 		}
 	}
 
@@ -120,7 +129,7 @@ public class GameProfileDaoImpl implements GameProfileDao {
 	}
 
 	public void saveRssi(UserRSSI userRssi) {
-		String sql = "insert into rssi (userId, deviceId, rssi, latitude, longitude, operator_name, timestamp) values (?, ?, ?, ?, ?, ?, now())";
+		String sql = "insert into rssi (user_id, deviceId, rssi, latitude, longitude, operator_name, timestamp) values (?, ?, ?, ?, ?, ?, now())";
 		jdbcTemplateObject.update(sql, new Object[] { userRssi.getUserId(), userRssi.getDeviceId(), userRssi.getRssi(),
 				userRssi.getLatitude(), userRssi.getLongitude(), userRssi.getOperatorName() });
 	}
@@ -134,14 +143,16 @@ public class GameProfileDaoImpl implements GameProfileDao {
 			if (j != appData.getAppDetail().length - 1) {
 				whereIn += "'" + appData.getAppDetail()[j].getAppPackageName() + "',";
 			} else {
-				whereIn += "'" + appData.getAppDetail()[j].getAppPackageName() + "'))";
+				whereIn += "'" + appData.getAppDetail()[j].getAppPackageName() + "')) ";
 			}
 		}
 		sql1 += whereIn;
 		sql += sql1;
+		sql += "on duplicate key update user_id = user_id, game_id = game_id";
 		
 		String insertAvailability = "insert into user_availability (user_id, latitude, "
-				+ "longitude, availability, os_type, updated_at) values(?, ?, ?, 0, 1, now())";
+				+ "longitude, availability, os_type, updated_at) values(?, ?, ?, 0, 1, now()) "
+				+ "on duplicate key update updated_at=now()";
 		
 		System.out.println("SQL statement->" + sql1);
 		jdbcTemplateObject.update(sql, new Object[]{});
@@ -244,7 +255,7 @@ public class GameProfileDaoImpl implements GameProfileDao {
 
 	@SuppressWarnings("unchecked")
 	public List<UserGameResponse> getMutualGameList(String userId) {
-		String latSql = "select ua.latitude from user_availability ua where ua.user_id = " + userId;
+		String latSql = "select ua.latitude from user_availability ua where ua.user_id = '" + userId + "'";
 
 		String latitude = (String) jdbcTemplateObject.queryForObject(latSql, new RowMapper<String>() {
 			@Override
@@ -260,8 +271,8 @@ public class GameProfileDaoImpl implements GameProfileDao {
 				+ "join game_library gl on gl.id = gf.game_id join taqnihome_user u on u.user_id = gf.user_id where "
 				+ "u.user_id in (select u.user_id from taqnihome_user u join user_availability ua on u.user_id = ua.user_id "
 				+ "where ua.availability = 1 and (ua.latitude -  " + latitude + ") < 10 ) "
-				+ "and gf.game_id in (select gf.game_id from game_profile gf where gf.user_id = " + userId
-				+ ") and u.user_id <> " + userId + " group by u.user_id";
+				+ "and gf.game_id in (select gf.game_id from game_profile gf where gf.user_id = '" + userId
+				+ "') and u.user_id <> '" + userId + "' group by u.user_id";
 
 		java.util.List<UserGameResponse> userGameResponse = (List<UserGameResponse>) jdbcTemplateObject.query(sql,
 				new RowMapper<UserGameResponse>() {
@@ -308,9 +319,9 @@ public class GameProfileDaoImpl implements GameProfileDao {
 		String whereIn = "(";
 		for (int i = 0; i < userIds.size(); i++) {
 			if (i != userIds.size() - 1) {
-				whereIn += userIds.get(i) + ",";
+				whereIn += "'" + userIds.get(i) + "',";
 			} else {
-				whereIn += userIds.get(i) + ")";
+				whereIn += "'" + userIds.get(i) + "')";
 			}
 		}
 
@@ -349,10 +360,10 @@ public class GameProfileDaoImpl implements GameProfileDao {
 			java.sql.Time toTimeValue = new java.sql.Time(formatter.parse(toTime).getTime());
 			String sql = "insert into user_available_times (user_id, from_time, to_time, created_at) "
 					+ "values (?, ?, ?, now())";
-			String sql1 = "insert into user_notifications "
-					+ "(user_id, notification_sent, sent_at) values (?, 0, now())";
+//			String sql1 = "insert into user_notifications "
+//					+ "(user_id, notification_sent, sent_at) values (?, 0, now())";
 			jdbcTemplateObject.update(sql, new Object[] { userId, fromTimeValue, toTimeValue });
-			jdbcTemplateObject.update(sql1, new Object[] { userId });
+//			jdbcTemplateObject.update(sql1, new Object[] { userId });
 		} catch (ParseException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -386,9 +397,9 @@ public class GameProfileDaoImpl implements GameProfileDao {
 		String whereIn = "";
 		for (int i = 0; i < userIds.size(); i++) {
 			if (i != userIds.size() - 1) {
-				whereIn += userIds.get(i) + ",";
+				whereIn += "'" + userIds.get(i) + "',";
 			} else {
-				whereIn += userIds.get(i);
+				whereIn += "'" + userIds.get(i) + "'";
 			}
 		}
 
@@ -400,7 +411,7 @@ public class GameProfileDaoImpl implements GameProfileDao {
 
 	private void notifyNearByUsers(List<String> userIds) {
 		for(String userId : userIds) {
-			String latSql = "select ua.latitude from user_availability ua where ua.user_id = " + userId;
+			String latSql = "select ua.latitude from user_availability ua where ua.user_id = '" + userId + "'";
 			Long latitude = (Long)jdbcTemplateObject.queryForObject(latSql, new RowMapper<Long>() {
 				@Override
 				public Long mapRow(ResultSet rs, int rowNum) throws SQLException {
@@ -408,13 +419,14 @@ public class GameProfileDaoImpl implements GameProfileDao {
 				}
 			});
 			
-			String sql = "select u.user_id, u.device_token, u.firstname, u.lastname " +
+			String sql = "select u.user_id, d.push_token, u.name " +
 			"from game_profile gf " + 
-			"join game_library gl on gl.id = gf.game_id join taqnihome_user u on u.user_id = gf.user_id where " +
+			"join game_library gl on gl.id = gf.game_id join taqnihome_user u on u.user_id = gf.user_id join device_details_mapping dm "
+				+ "on u.user_id = dm.user_id join device d on dm.device_id = d.device_id where " +
 			"u.user_id in (select u.user_id from taqnihome_user u join user_availability ua on u.user_id = ua.user_id " +
 			"where ua.availability = 1 and abs(ua.latitude - " + latitude + ") < 10 ) " +
-			"and gf.game_id in (select gf.game_id from game_profile gf where gf.user_id = " + userId +
-			") and u.user_id <> " + userId + " group by u.user_id";
+			"and gf.game_id in (select gf.game_id from game_profile gf where gf.user_id = '" + userId +
+			"') and u.user_id <> '" + userId + "' group by u.user_id";
 			
 			@SuppressWarnings("unchecked")
 			List<NearByUserDBModel> nearByUserModels = (List<NearByUserDBModel>)jdbcTemplateObject.query(sql, new NearByUserRowMapper());
@@ -448,28 +460,28 @@ public class GameProfileDaoImpl implements GameProfileDao {
 			e.printStackTrace();
 		}
 		
-		String sql1 = "insert into user_notifications (user_id, neighbour_user_id, notification_sent, sent_at)"
-				+ " values (?, ?, ?, now()) on duplicate key update notification_sent = 1";
-		try {
-			PreparedStatement ps = dataSource.getConnection().prepareStatement(sql);
-			for (String user : userIds) {
-			    ps.setString(1, user);
-			    ps.setString(2, userId);
-			    ps.setInt(3, 1);
-			    ps.addBatch();
-			}
-			ps.executeBatch();
-			
-			dataSource.getConnection().close();
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+//		String sql1 = "insert into user_notifications (user_id, neighbour_user_id, notification_sent, sent_at)"
+//				+ " values (?, ?, ?, now()) on duplicate key update notification_sent = 1";
+//		try {
+//			PreparedStatement ps = dataSource.getConnection().prepareStatement(sql);
+//			for (String user : userIds) {
+//			    ps.setString(1, user);
+//			    ps.setString(2, userId);
+//			    ps.setInt(3, 1);
+//			    ps.addBatch();
+//			}
+//			ps.executeBatch();
+//			
+//			dataSource.getConnection().close();
+//		} catch (SQLException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 	}
 	
 	public void checkUserAvailability() {
 		String sql = "select uat.user_id from user_available_times uat " +
-				 	 "where uat.from_time < now() and uat.to_time > now()";
+				 	 "where uat.from_time > now() or uat.to_time < now()";
 		@SuppressWarnings("unchecked")
 		List<String> userIds = (List<String>)jdbcTemplateObject.query(sql, new RowMapper() {
 			@Override
@@ -488,9 +500,9 @@ public class GameProfileDaoImpl implements GameProfileDao {
 		String whereIn = "";
 		for (int i = 0; i < userIds.size(); i++) {
 			if (i != userIds.size() - 1) {
-				whereIn += userIds.get(i) + ",";
+				whereIn += "'" + userIds.get(i) + "',";
 			} else {
-				whereIn += userIds.get(i);
+				whereIn += "'" + userIds.get(i) + "'";
 			}
 		}
 		
@@ -502,14 +514,14 @@ public class GameProfileDaoImpl implements GameProfileDao {
 		String whereIn = "";
 		for (int i = 0; i < userIds.size(); i++) {
 			if (i != userIds.size() - 1) {
-				whereIn += userIds.get(i) + ",";
+				whereIn += "'" + userIds.get(i) + "',";
 			} else {
-				whereIn += userIds.get(i);
+				whereIn += "'" + userIds.get(i) + "'";
 			}
 		}
 		
 		for(String userId : userIds) {
-			String latSql = "select ua.latitude from user_availability ua where ua.user_id = " + userId;
+			String latSql = "select ua.latitude from user_availability ua where ua.user_id = '" + userId + "'";
 			Long latitude = (Long)jdbcTemplateObject.queryForObject(latSql, new RowMapper<Long>() {
 				@Override
 				public Long mapRow(ResultSet rs, int rowNum) throws SQLException {
@@ -517,13 +529,13 @@ public class GameProfileDaoImpl implements GameProfileDao {
 				}
 			});
 		String sqlStatement = "delete from user_notifications where " +
-					"(user_id = " + userId + " and neighbour_user_id not in  (select u.user_id as user_id " +
+					"(user_id = '" + userId + "' and neighbour_user_id not in  (select u.user_id as user_id " +
 					"from game_profile gf " +
 					"join game_library gl on gl.id = gf.game_id join taqnihome_user u on u.user_id = gf.user_id where " +
 					"u.user_id in (select u.user_id from taqnihome_user u join user_availability ua on u.user_id = ua.user_id " +
 					"where ua.availability = 1 and (abs(ua.latitude - " + latitude + ") < 10)) " +
-					"and gf.game_id in (select gf.game_id from game_profile gf where gf.user_id = " + userId + ") " +
-					"and u.user_id <> " + userId + " group by u.user_id)) " +
+					"and gf.game_id in (select gf.game_id from game_profile gf where gf.user_id = '" + userId + "') " +
+					"and u.user_id <> '" + userId + "' group by u.user_id)) " +
 					
  					"or user_id not in (" + whereIn + ")" +
 
@@ -532,11 +544,41 @@ public class GameProfileDaoImpl implements GameProfileDao {
 					"join game_library gl on gl.id = gf.game_id join taqnihome_user u on u.user_id = gf.user_id where " +
 					"u.user_id in (select u.user_id from taqnihome_user u join user_availability ua on u.user_id = ua.user_id " +
 					"where ua.availability = 1 and (abs(ua.latitude - " + latitude + ") < 10)) " +
-					"and gf.game_id in (select gf.game_id from game_profile gf where gf.user_id = " + userId + ") " +
-					"and u.user_id <> " + userId + " group by u.user_id) and neighbour_user_id = " + userId + ")";
+					"and gf.game_id in (select gf.game_id from game_profile gf where gf.user_id = '" + userId + "') " +
+					"and u.user_id <> '" + userId + "' group by u.user_id) and neighbour_user_id = '" + userId + "')";
 		
 			jdbcTemplateObject.execute(sqlStatement);
 		}
 	}
+
+	@Override
+	public void saveDataUsage(UserDataUsage dataUsage) {
+		String sql = "insert into data_usage (user_id, country, deviceId, mobileTx, mobileRx, wifiTx, wifiRx, longitude, latitude, operator_name, timestamp) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now())";
+		jdbcTemplateObject.update(sql,
+				new Object[] { dataUsage.getUserId(), dataUsage.getCountry(), dataUsage.getDeviceId(),
+						dataUsage.getMobileTx(), dataUsage.getMobileRx(), dataUsage.getWifiTx(), dataUsage.getWifiRx(),
+						dataUsage.getLongitude(), dataUsage.getLatitude(), dataUsage.getOperatorName() });
+
+	}
+
+	@Override
+	public void aggregateCallDuration(CallDuration callDuration) {
+		String sql = "insert into call_logs (user_id, country, total_mobileRx, "
+				+ "total_mobileTx, total_wifiRx, total_wifiTx, timestamp) (select user_id, country, sum(mobileRx) as totalMobileRx, sum(mobileTx) as totalMobileTx, "
+				+ "sum(wifiRx) as totalWifiRx, sum(wifiTx) as totalWifiTx, now() from data_usage group by user_id, country)";
+
+		System.out.println(sql);
+		jdbcTemplateObject.update(sql, new Object[] {});
+	}
+
+	public Aggregate aggregateRssiAndDataUsage() {
+		String sql = "select user_id, country, sum(mobileRx) as totalMobileRx, sum(mobileTx) as totalMobileTx, "
+				+ "sum(wifiRx) as totalWifiRx, sum(wifiTx) as totalWifiTx "
+				+ "from data_usage group by user_id, country";
+		@SuppressWarnings("unchecked")
+		Aggregate user = (Aggregate) jdbcTemplateObject.queryForObject(sql, null, new DataUsageMapper());
+		return user;
+	}
+
 
 }

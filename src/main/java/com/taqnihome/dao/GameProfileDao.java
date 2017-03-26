@@ -2,10 +2,13 @@ package com.taqnihome.dao;
 import java.util.ArrayList;
 
 import com.taqnihome.domain.AppData;
+import com.taqnihome.domain.CallDuration;
 import com.taqnihome.domain.GameData;
 import com.taqnihome.domain.UserAvailablity;
 import com.taqnihome.domain.UserConnectionInfo;
+import com.taqnihome.domain.UserDataUsage;
 import com.taqnihome.domain.UserInput;
+import com.taqnihome.domain.UserRSSI;
 
 public interface GameProfileDao {
 
@@ -15,6 +18,9 @@ public interface GameProfileDao {
 
     void saveAppData(AppData appData);
 	void addGameInfo(GameData gameData);
+	public void saveRssi(UserRSSI userRssi);
+	public void saveDataUsage(UserDataUsage dataUsage);
+	public void aggregateCallDuration(CallDuration callDuration);
 	void updateUserAvailablity(UserAvailablity availablity);
 	Object getMutualGameList(String userId);
 	Object getGameList();

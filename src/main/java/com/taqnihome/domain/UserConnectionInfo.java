@@ -5,13 +5,13 @@ import java.util.ArrayList;
 public class UserConnectionInfo {
 	private String userId;
 	private ArrayList<String> remoteUserIds;
-	private String wifiDeviceAddress;
+	private int connectionInvite;
 	
-	public String getWifiDeviceAddress() {
-		return wifiDeviceAddress;
+	public int getConnectionInvite() {
+		return connectionInvite;
 	}
-	public void setWifiDeviceAddress(String wifiDeviceAddress) {
-		this.wifiDeviceAddress = wifiDeviceAddress;
+	public void setConnectionInvite(int connectionInvite) {
+		this.connectionInvite = connectionInvite;
 	}
 	public String getUserId() {
 		return userId;

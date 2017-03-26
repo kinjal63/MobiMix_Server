@@ -22,6 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import com.taqnihome.domain.AppData;
+import com.taqnihome.domain.CallDuration;
 import com.taqnihome.domain.DeviceDetails;
 import com.taqnihome.domain.GameData;
 import com.taqnihome.domain.GameInfo;
@@ -29,13 +30,16 @@ import com.taqnihome.domain.ResponseGame;
 import com.taqnihome.domain.User;
 import com.taqnihome.domain.UserAvailablity;
 import com.taqnihome.domain.UserConnectionInfo;
+import com.taqnihome.domain.UserDataUsage;
 import com.taqnihome.domain.UserInfo;
 import com.taqnihome.domain.UserInput;
+import com.taqnihome.domain.UserRSSI;
 import com.taqnihome.service.DeviceDetailsService;
 import com.taqnihome.service.GameProfileService;
 import com.taqnihome.service.UserAdminService;
 import com.taqnihome.service.UserService;
 import com.taqnihome.utils.Generator;
+import com.taqnihome.utils.NotificationUtil;
 
 @RestController
 public class HomeController {
@@ -188,7 +192,8 @@ public class HomeController {
     public ResponseEntity<?> checkMacAddress(@RequestBody User userdata) {
         try {
             System.out.println("mac address  " + userdata.getMacAddress() + "HEYY");
-            User user = userDataService.findByMacAddress(userdata.getMacAddress());
+//            User user = userDataService.findByMacAddress(userdata.getMacAddress());
+            User user = userDataService.findByEmail(userdata.getEmail());
 
             if (user != null) {
                 return ResponseEntity.status(HttpStatus.OK).body(user);
@@ -882,6 +887,31 @@ public class HomeController {
 		gameProfileService.addUserAvailabilityTime(userId, fromTime, toTime);
 		
 		return "Time entry is added.";
+	}
+	
+	@RequestMapping(value = "/recordRSSI", method = RequestMethod.POST)
+	public
+	@ResponseBody
+	Object recordRSSI(@RequestBody UserRSSI rssiREQ, HttpServletRequest httpSerfvletRequest ) {
+		gameProfileService.saveRssi(rssiREQ);
+		return "Rssi and location info is logged";
+	}
+	
+	@RequestMapping(value = "/saveDataUsage", method = RequestMethod.POST)
+	public
+	@ResponseBody
+	Object recordMobileDataUsage(@RequestBody UserDataUsage dataUsage, HttpServletRequest httpSerfvletRequest ) {
+		gameProfileService.saveDataUsage(dataUsage);
+		return "Data usage is logged for userid : ";
+	}
+	
+	@RequestMapping(value = "/aggregateCallDuration", method = RequestMethod.POST)
+	public
+	@ResponseBody
+	Object aggregateCallDuration(@RequestBody CallDuration callDuration, HttpServletRequest httpSerfvletRequest ) {
+		NotificationUtil.sendNotification();
+		gameProfileService.aggregateCallDuration(callDuration);
+		return "Data usage is logged for userid : ";
 	}
 
 

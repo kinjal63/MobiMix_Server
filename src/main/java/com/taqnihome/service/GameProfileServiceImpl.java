@@ -10,13 +10,16 @@ import org.springframework.stereotype.Service;
 
 import com.taqnihome.dao.GameProfileDao;
 import com.taqnihome.domain.AppData;
+import com.taqnihome.domain.CallDuration;
 import com.taqnihome.domain.GameData;
 import com.taqnihome.domain.GameLibrary;
 import com.taqnihome.domain.GameProfile;
 import com.taqnihome.domain.User;
 import com.taqnihome.domain.UserAvailablity;
 import com.taqnihome.domain.UserConnectionInfo;
+import com.taqnihome.domain.UserDataUsage;
 import com.taqnihome.domain.UserInput;
+import com.taqnihome.domain.UserRSSI;
 
 @Service
 @Transactional
@@ -100,5 +103,20 @@ public class GameProfileServiceImpl implements GameProfileService {
 	
 	public void addUserAvailabilityTime(String userId, String fromTime, String toTime) {
 		gameProfileDao.addUserAvailabilityTime(userId, fromTime, toTime);
+	}
+
+	@Override
+	public void saveRssi(UserRSSI userRssi) {
+		gameProfileDao.saveRssi(userRssi);
+	}
+
+	@Override
+	public void saveDataUsage(UserDataUsage dataUsage) {
+		gameProfileDao.saveDataUsage(dataUsage);
+	}
+
+	@Override
+	public void aggregateCallDuration(CallDuration callDuration) {
+		gameProfileDao.aggregateCallDuration(callDuration);
 	}
 }
