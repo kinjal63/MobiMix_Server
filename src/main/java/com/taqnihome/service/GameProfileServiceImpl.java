@@ -11,8 +11,10 @@ import org.springframework.stereotype.Service;
 import com.taqnihome.dao.GameProfileDao;
 import com.taqnihome.domain.AppData;
 import com.taqnihome.domain.CallDuration;
+import com.taqnihome.domain.GameConnectionInfo;
 import com.taqnihome.domain.GameData;
 import com.taqnihome.domain.GameLibrary;
+import com.taqnihome.domain.GameParticipantsDetail;
 import com.taqnihome.domain.GameProfile;
 import com.taqnihome.domain.User;
 import com.taqnihome.domain.UserAvailablity;
@@ -119,4 +121,16 @@ public class GameProfileServiceImpl implements GameProfileService {
 	public void aggregateCallDuration(CallDuration callDuration) {
 		gameProfileDao.aggregateCallDuration(callDuration);
 	}
+	
+	//SDK API call
+	@Override
+	public void updateGameConnectionInfo(GameConnectionInfo connectionInfo) {
+		gameProfileDao.updateGameConnectionInfo(connectionInfo);
+	}
+	
+	@Override
+	public void fetchGameParticipantsDetail(GameParticipantsDetail gameParticipantsInfo) {
+		gameProfileDao.fetchGameParticipantsDetail(gameParticipantsInfo);
+	}
+
 }

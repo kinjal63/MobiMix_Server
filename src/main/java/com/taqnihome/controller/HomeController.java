@@ -142,7 +142,6 @@ public class HomeController {
         	e.printStackTrace();
             System.out.println("Exception in signup" + e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-
         }
     }
 
@@ -185,7 +184,6 @@ public class HomeController {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
-
     }
 
     @RequestMapping(value = "search", method = RequestMethod.POST)
@@ -805,7 +803,7 @@ public class HomeController {
 	
 	@RequestMapping(value = "/getGameList", method = RequestMethod.POST)
 	public @ResponseBody
-	Object getGameList(HttpServletRequest httpSerfvletRequest) {
+	Object getGameList(HttpServletRequest httpServletRequest) {
 		GameInfo gameInfo = new GameInfo();
 		gameInfo.setGameDetails(gameProfileService.getGameList());
 		return gameInfo;

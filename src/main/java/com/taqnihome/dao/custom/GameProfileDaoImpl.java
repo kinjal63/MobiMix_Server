@@ -10,6 +10,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -23,20 +24,25 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import com.fasterxml.jackson.core.sym.Name;
 import com.taqnihome.dao.GameProfileDao;
 import com.taqnihome.domain.Aggregate;
 import com.taqnihome.domain.AppData;
 import com.taqnihome.domain.CallDuration;
+import com.taqnihome.domain.GameConnectionInfo;
 import com.taqnihome.domain.GameData;
 import com.taqnihome.domain.GameDataModel;
+import com.taqnihome.domain.GameParticipantsDetail;
 import com.taqnihome.domain.UserAvailablity;
 import com.taqnihome.domain.UserConnectionInfo;
 import com.taqnihome.domain.UserDataUsage;
 import com.taqnihome.domain.UserGameResponse;
 import com.taqnihome.domain.UserInput;
 import com.taqnihome.domain.UserRSSI;
+import com.taqnihome.model.db.GameRequest;
 import com.taqnihome.model.db.NearByUserDBModel;
 import com.taqnihome.model.mapper.DataUsageMapper;
+import com.taqnihome.model.mapper.GameRequestMapper;
 import com.taqnihome.model.mapper.NearByUserRowMapper;
 import com.taqnihome.utils.NotificationUtil;
 
@@ -78,15 +84,22 @@ public class GameProfileDaoImpl implements GameProfileDao {
 	public void sendConnectionInvite(UserConnectionInfo userConnectionInfo) {
 		String whereIn = "(";
 		int size = userConnectionInfo.getRemoteUserIds().size();
-		String emailQuery = "select email from taqnihome_user where user_id= '" + userConnectionInfo.getUserId() + "'";
 		
-		String email = (String) jdbcTemplateObject.queryForObject(emailQuery, new RowMapper<String>() {
-			@Override
-			public String mapRow(ResultSet rs, int rowNum) throws SQLException {
-				return rs.getString(1);
-			}
-		});
+		String gameRequestQuery = "select tu.user_id as remote_user_id, tu.name as remote_user_name, "
+				+ "tu.email as wifidirect_or_bluetooth_name, " //+ (userConnectionInfo.getConnectionInvite() == 1 ? "bluetooth_name" : "wifidirect_name") + " ,"
+				+ "gl.id as game_id, gl.game_name, gl.game_package_name "
+				+ "from taqnihome_user tu, game_library gl "
+				+ "where tu.user_id = '" + userConnectionInfo.getUserId() + "' and gl.game_package_name = '"
+				+ userConnectionInfo.getGamePackageName() + "'";
 		
+		GameRequest gameRequestObject = (GameRequest) jdbcTemplateObject.queryForObject(gameRequestQuery, new GameRequestMapper());
+		
+		if(gameRequestObject != null) {
+			if( userConnectionInfo.getConnectionInvite() == 1 )
+				gameRequestObject.setNotificationType(1);
+			else
+				gameRequestObject.setNotificationType(2);
+		}
 
 		for (int i = 0; i < size; i++) {
 			if (i != size - 1) {
@@ -95,7 +108,6 @@ public class GameProfileDaoImpl implements GameProfileDao {
 				whereIn += "'" + userConnectionInfo.getRemoteUserIds().get(i) + "')";
 			}
 		}
-		
 
 		String idQuery = "select d.push_token from taqnihome_user tu join device_details_mapping dm "
 				+ "on tu.user_id = dm.user_id join device d on dm.device_id = d.device_id where tu.user_id in " + whereIn;
@@ -107,10 +119,10 @@ public class GameProfileDaoImpl implements GameProfileDao {
 			}
 		});
 		if( userConnectionInfo.getConnectionInvite() == 2 ) {
-			NotificationUtil.sendWifiInvitation(userConnectionInfo.getUserId(), deviceTokens, email);	
+			NotificationUtil.sendWifiInvitation(deviceTokens, gameRequestObject);	
 		}
 		else {
-			NotificationUtil.sendBluetoothInvitation(userConnectionInfo.getUserId(), deviceTokens, email);
+			NotificationUtil.sendBluetoothInvitation(deviceTokens, gameRequestObject);
 		}
 	}
 
@@ -411,15 +423,23 @@ public class GameProfileDaoImpl implements GameProfileDao {
 
 	private void notifyNearByUsers(List<String> userIds) {
 		for(String userId : userIds) {
-			String latSql = "select ua.latitude from user_availability ua where ua.user_id = '" + userId + "'";
-			Long latitude = (Long)jdbcTemplateObject.queryForObject(latSql, new RowMapper<Long>() {
+			String latSql = "select ua.latitude, tu.name from user_availability ua join taqnihome_user tu on ua.user_id = tu.user_id"
+					+ " where ua.user_id = '" + userId + "'";
+			Map<String, Object> map = (Map<String, Object>)jdbcTemplateObject.queryForObject(latSql, new RowMapper<Map<String, Object>>() {
 				@Override
-				public Long mapRow(ResultSet rs, int rowNum) throws SQLException {
-					return rs.getLong("latitude");
+				public Map<String, Object> mapRow(ResultSet rs, int rowNum) throws SQLException {
+					Map<String, Object> map = new HashMap<>();
+					map.put("latitude", rs.getLong("latitude"));
+					map.put("name", rs.getString("name"));
+					
+					return map;
 				}
 			});
 			
-			String sql = "select u.user_id, d.push_token, u.name " +
+			Long latitude = (Long)map.get("latitude");
+			String name = (String)map.get("name");
+			
+			String sql = "select u.user_id, u.name, d.push_token, u.name " +
 			"from game_profile gf " + 
 			"join game_library gl on gl.id = gf.game_id join taqnihome_user u on u.user_id = gf.user_id join device_details_mapping dm "
 				+ "on u.user_id = dm.user_id join device d on dm.device_id = d.device_id where " +
@@ -437,7 +457,7 @@ public class GameProfileDaoImpl implements GameProfileDao {
 				deviceTokens.add(model.getDeviceToken());
 				neighbourUserIds.add(model.getUserId());
 			}
-			NotificationUtil.notifyOtherUsers(userId, deviceTokens);
+			NotificationUtil.notifyOtherUsers(name, deviceTokens);
 			updateNotifications(userId, neighbourUserIds);
 		}
 	}
@@ -579,6 +599,36 @@ public class GameProfileDaoImpl implements GameProfileDao {
 		Aggregate user = (Aggregate) jdbcTemplateObject.queryForObject(sql, null, new DataUsageMapper());
 		return user;
 	}
+	
+	public void updateGameConnectionInfo(GameConnectionInfo gameConnectionInfo) {
+		String sql = "insert into game_participants_details (game_id, user_id, is_group_owner, connected_user_id, created_at) "
+				+ "values (?, ?, ?, ?, now())";
+		jdbcTemplateObject.update(sql, new Object[] {gameConnectionInfo.getGameId(), gameConnectionInfo.getUserId(),
+				gameConnectionInfo.getIsGroupOwner(), gameConnectionInfo.getConnectedUserId()});
+		
+		if(gameConnectionInfo.getIsNeedToNotify()) {
+			String query = "select gl.game_package_name, (select d.push_token from taqnihome_user tu join device_details_mapping dm "
+					+ "on tu.user_id = dm.user_id join device d on dm.device_id = d.device_id where tu.user_id = ?) as push_token "
+					+ "from game_library gl where gl.id = ?";
+			
+			
+			Map<String, Object> mapObj = jdbcTemplateObject.queryForMap(query, new String[]{gameConnectionInfo.getConnectedUserId(), String.valueOf(gameConnectionInfo.getGameId())});
 
-
+			GameRequest request = new GameRequest();
+			request.setRemoteUserId(gameConnectionInfo.getUserId());
+			request.setGameId(gameConnectionInfo.getGameId());
+			request.setGamePackageName(mapObj.get("game_package_name").toString());
+			
+			NotificationUtil.notifyEstablishedConnectionToRemoteUser(mapObj.get("push_token").toString(), request);
+		}
+	}
+	
+	public void fetchGameParticipantsDetail(GameParticipantsDetail gameParticipantDetail) {
+		String sql = "select tu.name from taqnihome_user tu where tu.user_id in (select gpd.user_id " +
+					 "from game_participants_details gpd join taqnihome_user tu on (gpd.user_id = tu.user_id " +
+					 "or gpd.connected_user_id = tu.user_id) join game_library gl on gpd.game_id = gl.id " +
+					 "where tu.email = ? and gl.game_package_name = ?)";
+		jdbcTemplateObject.update(sql, new Object[] {gameParticipantDetail.getWifiorBluetoothName(), 
+				gameParticipantDetail.getGamePackageName()});
+	}
 }

@@ -23,6 +23,6 @@ public class ScheduleService {
 	    @Scheduled(fixedDelay = 20000)
 	    public void checkUserAvailability()
 	    {
-	    	gameProfileDao.checkUserAvailability();
+//	    	gameProfileDao.checkUserAvailability();
 	    }
 }

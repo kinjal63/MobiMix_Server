@@ -6,6 +6,7 @@ public class UserConnectionInfo {
 	private String userId;
 	private ArrayList<String> remoteUserIds;
 	private int connectionInvite;
+	private String gamePackageName;
 	
 	public int getConnectionInvite() {
 		return connectionInvite;
@@ -24,5 +25,11 @@ public class UserConnectionInfo {
 	}
 	public void setRemoteUserIds(ArrayList<String> remoteUserIds) {
 		this.remoteUserIds = remoteUserIds;
+	}
+	public void setGamePackageName(String gamePackageName) {
+		this.gamePackageName = gamePackageName;
+	}
+	public String getGamePackageName() {
+		return this.gamePackageName;
 	}
 }

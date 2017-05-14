@@ -3,7 +3,9 @@ import java.util.ArrayList;
 
 import com.taqnihome.domain.AppData;
 import com.taqnihome.domain.CallDuration;
+import com.taqnihome.domain.GameConnectionInfo;
 import com.taqnihome.domain.GameData;
+import com.taqnihome.domain.GameParticipantsDetail;
 import com.taqnihome.domain.UserAvailablity;
 import com.taqnihome.domain.UserConnectionInfo;
 import com.taqnihome.domain.UserDataUsage;
@@ -34,4 +36,8 @@ public interface GameProfileDao {
 	//cron job functions
 	void updateAndNotifyNearByUsers();
 	void checkUserAvailability();
+	
+	//SDK API call
+	void updateGameConnectionInfo(GameConnectionInfo connectionInfo);
+	void fetchGameParticipantsDetail(GameParticipantsDetail gameParticipantsInfo);
 }

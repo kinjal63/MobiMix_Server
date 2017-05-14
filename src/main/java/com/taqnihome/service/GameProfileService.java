@@ -4,7 +4,9 @@ import java.util.ArrayList;
 
 import com.taqnihome.domain.AppData;
 import com.taqnihome.domain.CallDuration;
+import com.taqnihome.domain.GameConnectionInfo;
 import com.taqnihome.domain.GameData;
+import com.taqnihome.domain.GameParticipantsDetail;
 import com.taqnihome.domain.UserAvailablity;
 import com.taqnihome.domain.UserConnectionInfo;
 import com.taqnihome.domain.UserDataUsage;
@@ -30,4 +32,8 @@ public interface GameProfileService /* extends GenericService<String, GameProfil
 	void sendRemoteUserInput(UserInput userInput);
 	Object getMutualGameList(String userId, ArrayList<String> userIds);
 	void addUserAvailabilityTime(String userId, String fromTime, String toTime);
+	
+	//SDK API call
+	void updateGameConnectionInfo(GameConnectionInfo connectionInfo);
+	void fetchGameParticipantsDetail(GameParticipantsDetail gameParticipantsInfo);
 }

@@ -13,27 +13,32 @@ import org.springframework.web.client.RestTemplate;
 import com.google.android.gcm.server.Message;
 import com.google.android.gcm.server.Result;
 import com.google.android.gcm.server.Sender;
+import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.taqnihome.domain.GameConnectionInfo;
+import com.taqnihome.model.db.GameRequest;
 import com.taqnihome.request.custom.CustomRequest;
 
 public class NotificationUtil {
 	private static final String serverKey = "AAAAdVay44I:APA91bHog7dyl-BBHqP9_RsgptmG00vyQ7wnTBMGzR1j80kH2SwEaa9SpuRCYviT3GcOGJZKJOOjfj6wToYbmwLO2X_2QVzN_MOHc5qjykOi2KGbpfCJL2FC64CZDySZeshPUrxGCvc-";
 	
-	public static void sendBluetoothInvitation(final String userId, final List<String> deviceTokens, final String bluetoothAddress) {
+	public static void sendBluetoothInvitation(final List<String> deviceTokens, final GameRequest gameRequestObject) {
 		Thread t = new Thread(new Runnable() {
 
 			@Override
 			public void run() {
 				try {
 					for (String deviceToken : deviceTokens) {
-						JsonObject jsonObject = new JsonObject();
-						jsonObject.addProperty("remote_user_id", userId);
-						jsonObject.addProperty("connection_invite", 1);
-						jsonObject.addProperty("bluetooth_address", bluetoothAddress);
+						String messageToSend = new Gson().toJson(gameRequestObject);
+//						JsonObject jsonObject = new JsonObject();
+//						jsonObject.addProperty("remote_user_id", userId);
+//						jsonObject.addProperty("connection_type", 1);
+//						jsonObject.addProperty("bluetooth_address", bluetoothAddress);
+//						jsonObject.addProperty("notification_type", 1 );
 
 						Sender sender = new FCMSender(serverKey);
 						Message message = new Message.Builder().collapseKey("message").timeToLive(3)
-								.delayWhileIdle(true).addData("message", jsonObject.toString()).build();
+								.delayWhileIdle(true).addData("message", messageToSend).build();
 
 						// Use the same token(or registration id) that was
 						// earlier
@@ -55,21 +60,18 @@ public class NotificationUtil {
 		}
 	}
 	
-	public static void sendWifiInvitation(final String userId, final List<String> deviceTokens, final String wifiAddress) {
+	public static void sendWifiInvitation(final List<String> deviceTokens, final GameRequest gameRequestObject) {
 		Thread t = new Thread(new Runnable() {
 
 			@Override
 			public void run() {
 				try {
-					for (String deviceToken : deviceTokens) {
-						JsonObject jsonObject = new JsonObject();
-						jsonObject.addProperty("remote_user_id", userId);
-						jsonObject.addProperty("connection_invite", 2);
-						jsonObject.addProperty("wifi_address", wifiAddress);
-
+					for (String deviceToken : deviceTokens) {	
+						String messageToSend = new Gson().toJson(gameRequestObject);
+					
 						Sender sender = new FCMSender(serverKey);
 						Message message = new Message.Builder().collapseKey("message").timeToLive(3)
-								.delayWhileIdle(true).addData("message", jsonObject.toString()).build();
+								.delayWhileIdle(true).addData("message", messageToSend).build();
 
 						// Use the same token(or registration id) that was
 						// earlier
@@ -125,7 +127,7 @@ public class NotificationUtil {
 		}
 	}
 
-	public static void notifyOtherUsers(final String userId, final List<String> deviceTokens) {
+	public static void notifyOtherUsers(final String name, final List<String> deviceTokens) {
 		Thread t = new Thread(new Runnable() {
 
 			@Override
@@ -133,8 +135,8 @@ public class NotificationUtil {
 				try {
 					for (String deviceToken : deviceTokens) {
 						JsonObject jsonObject = new JsonObject();
-						jsonObject.addProperty("remote_user_id", userId);
-						jsonObject.addProperty("notification_message", 1);
+						jsonObject.addProperty("remote_user_name", name);
+						jsonObject.addProperty("notification_type", 4);
 
 						Sender sender = new FCMSender(serverKey);
 						Message message = new Message.Builder().collapseKey("message").timeToLive(3)
@@ -147,6 +149,38 @@ public class NotificationUtil {
 						Result result = sender.send(message, deviceToken, 1);
 						System.out.println("Result: " + result.toString());
 					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+
+		});
+		t.start();
+		try {
+			t.join();
+		} catch (InterruptedException iex) {
+			iex.printStackTrace();
+		}
+	}
+	
+	public static void notifyEstablishedConnectionToRemoteUser(final String deviceToken, final GameRequest gameRequest) {
+		Thread t = new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				try {
+					String messageToSend = new Gson().toJson(gameRequest).toString();
+
+					Sender sender = new FCMSender(serverKey);
+					Message message = new Message.Builder().collapseKey("message").timeToLive(3)
+							.delayWhileIdle(true).addData("message", messageToSend).build();
+
+					// Use the same token(or registration id) that was
+					// earlier
+					// used to send the message to the client directly from
+					// Firebase Console's Notification tab.
+					Result result = sender.send(message, deviceToken, 1);
+					System.out.println("Result: " + result.toString());
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
