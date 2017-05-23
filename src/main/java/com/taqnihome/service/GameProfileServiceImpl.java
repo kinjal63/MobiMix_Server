@@ -22,6 +22,7 @@ import com.taqnihome.domain.UserConnectionInfo;
 import com.taqnihome.domain.UserDataUsage;
 import com.taqnihome.domain.UserInput;
 import com.taqnihome.domain.UserRSSI;
+import com.taqnihome.model.db.GamePlayersInfo;
 
 @Service
 @Transactional
@@ -129,8 +130,8 @@ public class GameProfileServiceImpl implements GameProfileService {
 	}
 	
 	@Override
-	public void fetchGameParticipantsDetail(GameParticipantsDetail gameParticipantsInfo) {
-		gameProfileDao.fetchGameParticipantsDetail(gameParticipantsInfo);
+	public List<GamePlayersInfo> fetchGameParticipantsDetail(GameParticipantsDetail gameParticipantsInfo) {
+		return gameProfileDao.fetchGameParticipantsDetail(gameParticipantsInfo);
 	}
 
 }

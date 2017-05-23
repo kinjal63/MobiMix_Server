@@ -1,6 +1,7 @@
 package com.taqnihome.service;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import com.taqnihome.domain.AppData;
 import com.taqnihome.domain.CallDuration;
@@ -12,6 +13,7 @@ import com.taqnihome.domain.UserConnectionInfo;
 import com.taqnihome.domain.UserDataUsage;
 import com.taqnihome.domain.UserInput;
 import com.taqnihome.domain.UserRSSI;
+import com.taqnihome.model.db.GamePlayersInfo;
 
 public interface GameProfileService /* extends GenericService<String, GameProfile>*/ {
 
@@ -35,5 +37,5 @@ public interface GameProfileService /* extends GenericService<String, GameProfil
 	
 	//SDK API call
 	void updateGameConnectionInfo(GameConnectionInfo connectionInfo);
-	void fetchGameParticipantsDetail(GameParticipantsDetail gameParticipantsInfo);
+	List<GamePlayersInfo> fetchGameParticipantsDetail(GameParticipantsDetail gameParticipantsInfo);
 }

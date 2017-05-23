@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.taqnihome.domain.GameConnectionInfo;
 import com.taqnihome.domain.GameParticipantsDetail;
+import com.taqnihome.domain.ResponseGamePlayers;
 import com.taqnihome.service.GameProfileService;
 
 @RestController
@@ -40,7 +41,8 @@ public class MobiMixController {
     public ResponseEntity<?> fetchGameParticipantsDetail(@NotNull @RequestBody GameParticipantsDetail gameParticipantsDetail) {
 		try {
 			if( gameProfileService != null ) {
-				gameProfileService.fetchGameParticipantsDetail(gameParticipantsDetail);
+				ResponseGamePlayers gamePlayers = new ResponseGamePlayers();
+				gamePlayers.setGamePlayers(gameProfileService.fetchGameParticipantsDetail(gameParticipantsDetail));
 			}
 			return ResponseEntity.status(HttpStatus.CREATED).build();
 		}

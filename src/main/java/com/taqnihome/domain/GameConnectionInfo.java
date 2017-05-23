@@ -18,6 +18,9 @@ public class GameConnectionInfo {
 	
 	@JsonProperty("is_need_to_notify")
 	private boolean isNeedToNotify;
+	
+	@JsonProperty("connection_type")
+	private int connectionType;
 
 	public long getGameId() {
 		return gameId;
@@ -57,5 +60,13 @@ public class GameConnectionInfo {
 
 	public void setIsNeedToNotify(boolean isNeedToNotify) {
 		this.isNeedToNotify = isNeedToNotify;
+	}
+
+	public int getConnectionType() {
+		return connectionType;
+	}
+
+	public void setConnectionType(int connectionType) {
+		this.connectionType = connectionType;
 	}
 }

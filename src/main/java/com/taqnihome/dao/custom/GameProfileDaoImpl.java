@@ -24,7 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
-import com.fasterxml.jackson.core.sym.Name;
 import com.taqnihome.dao.GameProfileDao;
 import com.taqnihome.domain.Aggregate;
 import com.taqnihome.domain.AppData;
@@ -39,9 +38,11 @@ import com.taqnihome.domain.UserDataUsage;
 import com.taqnihome.domain.UserGameResponse;
 import com.taqnihome.domain.UserInput;
 import com.taqnihome.domain.UserRSSI;
+import com.taqnihome.model.db.GamePlayersInfo;
 import com.taqnihome.model.db.GameRequest;
 import com.taqnihome.model.db.NearByUserDBModel;
 import com.taqnihome.model.mapper.DataUsageMapper;
+import com.taqnihome.model.mapper.GamePlayersMapper;
 import com.taqnihome.model.mapper.GameRequestMapper;
 import com.taqnihome.model.mapper.NearByUserRowMapper;
 import com.taqnihome.utils.NotificationUtil;
@@ -601,10 +602,11 @@ public class GameProfileDaoImpl implements GameProfileDao {
 	}
 	
 	public void updateGameConnectionInfo(GameConnectionInfo gameConnectionInfo) {
-		String sql = "insert into game_participants_details (game_id, user_id, is_group_owner, connected_user_id, created_at) "
-				+ "values (?, ?, ?, ?, now())";
+		String sql = "insert into game_participants_details (game_id, user_id, is_group_owner, connected_user_id, connection_type,"
+				+ "created_at) values (?, ?, ?, ?, ?, now()) on duplicate key update connection_type = ?";
 		jdbcTemplateObject.update(sql, new Object[] {gameConnectionInfo.getGameId(), gameConnectionInfo.getUserId(),
-				gameConnectionInfo.getIsGroupOwner(), gameConnectionInfo.getConnectedUserId()});
+				gameConnectionInfo.getIsGroupOwner(), gameConnectionInfo.getConnectedUserId(), 
+				gameConnectionInfo.getConnectionType(), gameConnectionInfo.getConnectionType()});
 		
 		if(gameConnectionInfo.getIsNeedToNotify()) {
 			String query = "select gl.game_package_name, (select d.push_token from taqnihome_user tu join device_details_mapping dm "
@@ -623,12 +625,15 @@ public class GameProfileDaoImpl implements GameProfileDao {
 		}
 	}
 	
-	public void fetchGameParticipantsDetail(GameParticipantsDetail gameParticipantDetail) {
-		String sql = "select tu.name from taqnihome_user tu where tu.user_id in (select gpd.user_id " +
+	public List<GamePlayersInfo> fetchGameParticipantsDetail(GameParticipantsDetail gameParticipantDetail) {
+		String sql = "select tu.name, 1 as connection_type from taqnihome_user tu where tu.user_id in (select gpd.user_id " +
 					 "from game_participants_details gpd join taqnihome_user tu on (gpd.user_id = tu.user_id " +
 					 "or gpd.connected_user_id = tu.user_id) join game_library gl on gpd.game_id = gl.id " +
-					 "where tu.email = ? and gl.game_package_name = ?)";
-		jdbcTemplateObject.update(sql, new Object[] {gameParticipantDetail.getWifiorBluetoothName(), 
-				gameParticipantDetail.getGamePackageName()});
+					 "where tu.email = ? and gl.game_package_name = ?) where tu.email <> ?";
+		List<GamePlayersInfo> lstGamePlayers = (List<GamePlayersInfo>)jdbcTemplateObject.query(sql, new Object[] {gameParticipantDetail.getWifiorBluetoothName(), 
+				gameParticipantDetail.getGamePackageName(), gameParticipantDetail.getWifiorBluetoothName()}, new GamePlayersMapper());
+		
+		return lstGamePlayers;
+		
 	}
 }

@@ -5,7 +5,6 @@ public class NearByUserDBModel {
 	private String name;
 	private String deviceToken;
 	
-	
 	public String getUserId() {
 		return userId;
 	}
