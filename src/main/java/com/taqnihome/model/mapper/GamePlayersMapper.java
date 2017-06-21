@@ -14,6 +14,8 @@ public class GamePlayersMapper implements RowMapper {
 		GamePlayersInfo playerInfo = new GamePlayersInfo();
 		playerInfo.setUsername(rs.getString("name"));
 		playerInfo.setConnectionType(rs.getInt("connection_type"));
+		playerInfo.setIsGroupOwner(rs.getInt("is_group_owner"));
+		playerInfo.setDeviceName(rs.getString("device_name"));
 		
 		return playerInfo;
 	}

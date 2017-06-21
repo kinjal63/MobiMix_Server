@@ -96,10 +96,14 @@ public class GameProfileDaoImpl implements GameProfileDao {
 		GameRequest gameRequestObject = (GameRequest) jdbcTemplateObject.queryForObject(gameRequestQuery, new GameRequestMapper());
 		
 		if(gameRequestObject != null) {
-			if( userConnectionInfo.getConnectionInvite() == 1 )
+			if( userConnectionInfo.getConnectionInvite() == 1 ) {
 				gameRequestObject.setNotificationType(1);
-			else
+				gameRequestObject.setConnectionType(1);
+			}
+			else {
 				gameRequestObject.setNotificationType(2);
+				gameRequestObject.setConnectionType(2);
+			}
 		}
 
 		for (int i = 0; i < size; i++) {
@@ -613,23 +617,26 @@ public class GameProfileDaoImpl implements GameProfileDao {
 					+ "on tu.user_id = dm.user_id join device d on dm.device_id = d.device_id where tu.user_id = ?) as push_token "
 					+ "from game_library gl where gl.id = ?";
 			
-			
 			Map<String, Object> mapObj = jdbcTemplateObject.queryForMap(query, new String[]{gameConnectionInfo.getConnectedUserId(), String.valueOf(gameConnectionInfo.getGameId())});
 
 			GameRequest request = new GameRequest();
 			request.setRemoteUserId(gameConnectionInfo.getUserId());
 			request.setGameId(gameConnectionInfo.getGameId());
 			request.setGamePackageName(mapObj.get("game_package_name").toString());
+			request.setNotificationType(3);
+			request.setConnectionType(gameConnectionInfo.getConnectionType());
 			
 			NotificationUtil.notifyEstablishedConnectionToRemoteUser(mapObj.get("push_token").toString(), request);
 		}
 	}
 	
 	public List<GamePlayersInfo> fetchGameParticipantsDetail(GameParticipantsDetail gameParticipantDetail) {
-		String sql = "select tu.name, 1 as connection_type from taqnihome_user tu where tu.user_id in (select gpd.user_id " +
-					 "from game_participants_details gpd join taqnihome_user tu on (gpd.user_id = tu.user_id " +
-					 "or gpd.connected_user_id = tu.user_id) join game_library gl on gpd.game_id = gl.id " +
-					 "where tu.email = ? and gl.game_package_name = ?) where tu.email <> ?";
+		String sql = "select tu.name, tu.email as device_name, p.connection_type, p.is_group_owner from taqnihome_user tu, " + 
+					 "(select gpd.user_id, gpd.connection_type, gpd.is_group_owner " +
+				     "from game_participants_details gpd join taqnihome_user tu on (gpd.user_id = tu.user_id " +
+				     "or gpd.connected_user_id = tu.user_id) join game_library gl on gpd.game_id = gl.id " +
+				     "where tu.email = ? and gl.game_package_name = ?) p " +
+					 "where tu.user_id in (p.user_id) and tu.email <> ?";
 		List<GamePlayersInfo> lstGamePlayers = (List<GamePlayersInfo>)jdbcTemplateObject.query(sql, new Object[] {gameParticipantDetail.getWifiorBluetoothName(), 
 				gameParticipantDetail.getGamePackageName(), gameParticipantDetail.getWifiorBluetoothName()}, new GamePlayersMapper());
 		

@@ -1,16 +1,30 @@
 package com.taqnihome.model.db;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class GamePlayersInfo {
-	@SerializedName("name")
+	@JsonProperty("name")
 	private String username;
 	
-	@SerializedName("connection_type")
+	@JsonProperty("connection_type")
 	private int connectionType;
+	
+	@JsonProperty("is_group_owner")
+	private int isGroupOwner;
+	
+	@JsonProperty("device_name")
+	private String deviceName;
 
 	public String getUsername() {
 		return username;
+	}
+
+	public int getIsGroupOwner() {
+		return isGroupOwner;
+	}
+
+	public void setIsGroupOwner(int isGroupOwner) {
+		this.isGroupOwner = isGroupOwner;
 	}
 
 	public void setUsername(String username) {
@@ -24,4 +38,13 @@ public class GamePlayersInfo {
 	public void setConnectionType(int connectionType) {
 		this.connectionType = connectionType;
 	}
+
+	public String getDeviceName() {
+		return deviceName;
+	}
+
+	public void setDeviceName(String deviceName) {
+		this.deviceName = deviceName;
+	}
+	
 }

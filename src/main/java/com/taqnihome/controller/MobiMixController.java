@@ -43,8 +43,10 @@ public class MobiMixController {
 			if( gameProfileService != null ) {
 				ResponseGamePlayers gamePlayers = new ResponseGamePlayers();
 				gamePlayers.setGamePlayers(gameProfileService.fetchGameParticipantsDetail(gameParticipantsDetail));
+				
+				return ResponseEntity.status(HttpStatus.CREATED).body(gamePlayers);
 			}
-			return ResponseEntity.status(HttpStatus.CREATED).build();
+			return null;
 		}
 		catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.CONFLICT).build();
