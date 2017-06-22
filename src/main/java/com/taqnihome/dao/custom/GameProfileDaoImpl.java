@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
 
 import javax.sql.DataSource;
 
@@ -53,6 +54,7 @@ public class GameProfileDaoImpl implements GameProfileDao {
 	private Cloudinary cloudinary;
 	private DataSource dataSource;
 	private JdbcTemplate jdbcTemplateObject;
+	private HashMap<String, List<String>> queueMap = new HashMap<>();
 
 	@Autowired
 	public void setDataSource(DataSource dataSource) {
@@ -106,13 +108,14 @@ public class GameProfileDaoImpl implements GameProfileDao {
 			}
 		}
 
-		for (int i = 0; i < size; i++) {
-			if (i != size - 1) {
-				whereIn += "'" + userConnectionInfo.getRemoteUserIds().get(i) + "',";
-			} else {
-				whereIn += "'" + userConnectionInfo.getRemoteUserIds().get(i) + "')";
-			}
+		whereIn += "'" + userConnectionInfo.getRemoteUserIds().get(0) + "')";
+		
+		List<String> queueUserIds = new ArrayList<>();
+		for (int i = 1; i < size; i++) {
+			queueUserIds.add(userConnectionInfo.getRemoteUserIds().get(i));
 		}
+		
+		queueMap.put(userConnectionInfo.getUserId(), queueUserIds);
 
 		String idQuery = "select d.push_token from taqnihome_user tu join device_details_mapping dm "
 				+ "on tu.user_id = dm.user_id join device d on dm.device_id = d.device_id where tu.user_id in " + whereIn;
@@ -612,6 +615,8 @@ public class GameProfileDaoImpl implements GameProfileDao {
 				gameConnectionInfo.getIsGroupOwner(), gameConnectionInfo.getConnectedUserId(), 
 				gameConnectionInfo.getConnectionType(), gameConnectionInfo.getConnectionType()});
 		
+		pullQueueIfUserExists(gameConnectionInfo.getUserId(), gameConnectionInfo.getConnectedUserId());
+		
 		if(gameConnectionInfo.getIsNeedToNotify()) {
 			String query = "select gl.game_package_name, (select d.push_token from taqnihome_user tu join device_details_mapping dm "
 					+ "on tu.user_id = dm.user_id join device d on dm.device_id = d.device_id where tu.user_id = ?) as push_token "
@@ -642,5 +647,12 @@ public class GameProfileDaoImpl implements GameProfileDao {
 		
 		return lstGamePlayers;
 		
+	}
+	
+	private void pullQueueIfUserExists(String userId, String connectedUserId) {
+		List<String> userIds = (List<String>)queueMap.values();
+		for(String id : userIds) {
+			if(queueMap.)
+		}
 	}
 }
