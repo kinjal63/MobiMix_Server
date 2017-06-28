@@ -118,7 +118,7 @@ public class GameProfileDaoImpl implements GameProfileDao {
 		queueMap.put(userConnectionInfo.getUserId(), queueUserIds);
 
 		String idQuery = "select d.push_token from taqnihome_user tu join device_details_mapping dm "
-				+ "on tu.user_id = dm.user_id join device d on dm.device_id = d.device_id where tu.user_id in " + whereIn;
+				+ "on tu.user_id = dm.user_id join device d on dm.device_id = d.device_id where tu.user_id in (" + whereIn;
 
 		List<String> deviceTokens = (List<String>) jdbcTemplateObject.query(idQuery, new RowMapper<String>() {
 			@Override
@@ -650,9 +650,12 @@ public class GameProfileDaoImpl implements GameProfileDao {
 	}
 	
 	private void pullQueueIfUserExists(String userId, String connectedUserId) {
-		List<String> userIds = (List<String>)queueMap.values();
+		List<String> userIds = (List<String>)queueMap.get(userId);
 		for(String id : userIds) {
-			if(queueMap.)
+			String fetchUserIdToSendRequest = "select user_id from game_participants_details where (user_id = ? or "
+					+ "connected_user_id = ? and is_group_owner = 1)";
+			String requestTobeSentByUserId = (String)jdbcTemplateObject.queryForObject(fetchUserIdToSendRequest, new Object[] {userId, userId});
+			sendConnectionInvite(userConnectionInfo);
 		}
 	}
 }
