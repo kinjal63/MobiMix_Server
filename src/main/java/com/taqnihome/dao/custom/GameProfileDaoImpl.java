@@ -117,6 +117,21 @@ public class GameProfileDaoImpl implements GameProfileDao {
 		
 		queueMap.put(userConnectionInfo.getUserId(), queueUserIds);
 
+		sendInvitation(userConnectionInfo.getConnectionInvite(), userConnectionInfo.getRemoteUserIds().get(0), gameRequestObject );
+	}
+	
+	private void sendInvitation(int connectionInvite, List<String> userIds, GameRequest gameRequestObject) {
+		String whereIn = "";
+		
+		for(int i = 0; i < userIds.size(); i++) {
+			if(i != userIds.size() - 1) {
+				whereIn += "'" + userIds.get(i) + "',";
+			}
+			else {
+				whereIn += "'" + userIds.get(i) + "')";
+			}
+		}
+		
 		String idQuery = "select d.push_token from taqnihome_user tu join device_details_mapping dm "
 				+ "on tu.user_id = dm.user_id join device d on dm.device_id = d.device_id where tu.user_id in (" + whereIn;
 
@@ -126,12 +141,13 @@ public class GameProfileDaoImpl implements GameProfileDao {
 				return rs.getString(1);
 			}
 		});
-		if( userConnectionInfo.getConnectionInvite() == 2 ) {
+		if( connectionInvite == 2 ) {
 			NotificationUtil.sendWifiInvitation(deviceTokens, gameRequestObject);	
 		}
 		else {
 			NotificationUtil.sendBluetoothInvitation(deviceTokens, gameRequestObject);
 		}
+
 	}
 
 	@Override
