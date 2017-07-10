@@ -666,11 +666,11 @@ public class GameProfileDaoImpl implements GameProfileDao {
 	}
 	
 	private void pullQueueIfUserExists(String userId, String connectedUserId) {
+		if(queueMap.containsKey(userId)) {
 		List<String> userIds = (List<String>)queueMap.get(userId);
 		for(String id : userIds) {
-			String fetchUserIdToSendRequest = "select user_id from game_participants_details where (user_id = ? or "
-					+ "connected_user_id = ? and is_group_owner = 1)";
-			String requestTobeSentByUserId = (String)jdbcTemplateObject.queryForObject(fetchUserIdToSendRequest, new Object[] {userId, userId});
+			String fetchUserIdToSendRequest = "select game_idgroup_concat(connected_user_id) from game_participants_details where user_id = ?";
+			String requestTobeSentByUserId = (String)jdbcTemplateObject.query(fetchUserIdToSendRequest, new Object[] {userId});
 			sendConnectionInvite(userConnectionInfo);
 		}
 	}
