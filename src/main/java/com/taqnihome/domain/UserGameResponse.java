@@ -8,7 +8,24 @@ public class UserGameResponse {
 	private String userImagePath;
 	private String userFirstName;
 	private String userLastName;
+	private int isEngaged;
+	private long activeGameId;
+	private List<Long> gameId;
+	private List<String> gameName;
+	private List<String> gameImagePath;
 	
+	public int getIsEngaged() {
+		return isEngaged;
+	}
+	public void setIsEngaged(int isEngaged) {
+		this.isEngaged = isEngaged;
+	}
+	public long getActiveGame() {
+		return activeGameId;
+	}
+	public void setActiveGame(long activeGame) {
+		this.activeGameId = activeGame;
+	}
 	public String getUserFirstName() {
 		return userFirstName;
 	}
@@ -21,9 +38,6 @@ public class UserGameResponse {
 	public void setUserLastName(String userLastName) {
 		this.userLastName = userLastName;
 	}
-	private List<Long> gameId;
-	private List<String> gameName;
-	private List<String> gameImagePath;
 	
 	public String getUserId() {
 		return userId;

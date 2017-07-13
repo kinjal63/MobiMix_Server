@@ -33,6 +33,7 @@ import com.taqnihome.domain.GameConnectionInfo;
 import com.taqnihome.domain.GameData;
 import com.taqnihome.domain.GameDataModel;
 import com.taqnihome.domain.GameParticipantsDetail;
+import com.taqnihome.domain.GameRemoteUserNotification;
 import com.taqnihome.domain.UserAvailablity;
 import com.taqnihome.domain.UserConnectionInfo;
 import com.taqnihome.domain.UserDataUsage;
@@ -44,6 +45,7 @@ import com.taqnihome.model.db.GameRequest;
 import com.taqnihome.model.db.NearByUserDBModel;
 import com.taqnihome.model.mapper.DataUsageMapper;
 import com.taqnihome.model.mapper.GamePlayersMapper;
+import com.taqnihome.model.mapper.GameRemoteUserNotificationMapper;
 import com.taqnihome.model.mapper.GameRequestMapper;
 import com.taqnihome.model.mapper.NearByUserRowMapper;
 import com.taqnihome.utils.NotificationUtil;
@@ -83,21 +85,78 @@ public class GameProfileDaoImpl implements GameProfileDao {
 //		return null;
 //	}
 	
+//	@Override
+//	public void sendConnectionInvite(UserConnectionInfo userConnectionInfo) {
+//		String whereIn = "(";
+//		int size = userConnectionInfo.getRemoteUserIds().size();
+//		
+//		String gameRequestQuery = "select tu.user_id as remote_user_id, tu.name as remote_user_name, "
+//				+ "tu.email as wifidirect_or_bluetooth_name, " //+ (userConnectionInfo.getConnectionInvite() == 1 ? "bluetooth_name" : "wifidirect_name") + " ,"
+//				+ "gl.id as game_id, gl.game_name, gl.game_package_name "
+//				+ "from taqnihome_user tu, game_library gl "
+//				+ "where tu.user_id = '" + userConnectionInfo.getUserId() + "' and gl.game_package_name = '"
+//				+ userConnectionInfo.getGamePackageName() + "'";
+//		
+//		GameRequest gameRequestObject = (GameRequest) jdbcTemplateObject.queryForObject(gameRequestQuery, new GameRequestMapper());
+//		
+//		if(gameRequestObject != null) {
+//			if( userConnectionInfo.getConnectionInvite() == 1 ) {
+//				gameRequestObject.setNotificationType(1);
+//				gameRequestObject.setConnectionType(1);
+//			}
+//			else {
+//				gameRequestObject.setNotificationType(2);
+//				gameRequestObject.setConnectionType(2);
+//			}
+//		}
+//
+//		whereIn += "'" + userConnectionInfo.getRemoteUserIds().get(0) + "')";
+//		
+//		List<String> queueUserIds = new ArrayList<>();
+//		for (int i = 1; i < size; i++) {
+//			queueUserIds.add(userConnectionInfo.getRemoteUserIds().get(i));
+//		}
+//		
+//		queueMap.put(userConnectionInfo.getUserId(), queueUserIds);
+//
+//		sendInvitation(userConnectionInfo.getConnectionInvite(), userConnectionInfo.getRemoteUserIds().get(0), gameRequestObject );
+//	}
+
 	@Override
 	public void sendConnectionInvite(UserConnectionInfo userConnectionInfo) {
 		String whereIn = "(";
 		int size = userConnectionInfo.getRemoteUserIds().size();
+
+		for(int i = 0; i < size; i++) {
+			if(i != size - 1) {
+				whereIn += "'" + userConnectionInfo.getRemoteUserIds().get(i) + "',";
+			}
+			else {
+				whereIn += "'" + userConnectionInfo.getRemoteUserIds().get(i) + "')";
+			}
+		}
 		
-		String gameRequestQuery = "select tu.user_id as remote_user_id, tu.name as remote_user_name, "
-				+ "tu.email as wifidirect_or_bluetooth_name, " //+ (userConnectionInfo.getConnectionInvite() == 1 ? "bluetooth_name" : "wifidirect_name") + " ,"
-				+ "gl.id as game_id, gl.game_name, gl.game_package_name "
-				+ "from taqnihome_user tu, game_library gl "
-				+ "where tu.user_id = '" + userConnectionInfo.getUserId() + "' and gl.game_package_name = '"
-				+ userConnectionInfo.getGamePackageName() + "'";
+		String gameRequestQuery = "select gpd.user_id as group_owner_user_id,"
+								  + "group_concat(gpd.connected_user_id) as connected_user_ids "
+								  + "from game_participants_details gpd "
+								  + "join game_library gl on gpd.game_id = gl.id "
+								  + "where gl.game_package_name = '" + userConnectionInfo.getGamePackageName() + "' " 
+								  + "and gpd.connected_user_id in " + whereIn + " " 
+								  + "or gpd.user_id in " + whereIn + " " 
+								  + "group by gpd.user_id";
 		
-		GameRequest gameRequestObject = (GameRequest) jdbcTemplateObject.queryForObject(gameRequestQuery, new GameRequestMapper());
+		GameRemoteUserNotification gameRemoteUserNotification = (GameRemoteUserNotification) jdbcTemplateObject.queryForObject(gameRequestQuery, new GameRemoteUserNotificationMapper());
 		
-		if(gameRequestObject != null) {
+		
+		if(gameRemoteUserNotification != null) {
+			sendNotificationToGroupOwner(userConnectionInfo.getUserId(), gameRemoteUserNotification);
+		
+			List<String> userIdToSendNotiList = new ArrayList<>();
+			userIdToSendNotiList.add(gameRemoteUserNotification.getGroupOwnerUserId());
+			
+			for()
+			
+			sendInvitation(userConnectionInfo.getConnectionInvite(), userIdToSendNotiList);
 			if( userConnectionInfo.getConnectionInvite() == 1 ) {
 				gameRequestObject.setNotificationType(1);
 				gameRequestObject.setConnectionType(1);
@@ -118,6 +177,46 @@ public class GameProfileDaoImpl implements GameProfileDao {
 		queueMap.put(userConnectionInfo.getUserId(), queueUserIds);
 
 		sendInvitation(userConnectionInfo.getConnectionInvite(), userConnectionInfo.getRemoteUserIds().get(0), gameRequestObject );
+	}
+
+	private void sendNotificationToGroupOwner(UserConnectionInfo userConnectionInfo, GameRemoteUserNotification gameRemoteUser) {
+		String groupOwnerId = gameRemoteUser.getGroupOwnerUserId();
+		String query = "select d.push_token from taqnihome_user tu join device_details_mapping dm "
+				+ "on tu.user_id = dm.user_id join device d on dm.device_id = d.device_id where tu.user_id = "
+				+ groupOwnerId;
+		String pushToken = (String)jdbcTemplateObject.queryForObject(query, new RowMapper<String>() {
+			@Override
+			public String mapRow(ResultSet rs, int rowNum) throws SQLException {
+				if(rs.next()) {
+					return rs.getString("push_token");
+				}
+				return null;
+			}
+		});
+		List<String> pushTokens = new ArrayList<>();
+		pushTokens.add(pushToken);
+		
+		List<String> usersTobeAddedInQueue = new ArrayList<>();
+		for(String userId : userConnectionInfo.getRemoteUserIds()) {
+			if(!gameRemoteUser.getConnectedUserIds().contains(userId)) {
+				usersTobeAddedInQueue.add(userId);
+			}
+		}
+		
+		queueMap.put(groupOwnerId, usersTobeAddedInQueue);
+		
+		String gameRequestQuery = "select tu.user_id as remote_user_id, tu.name as remote_user_name, "
+				+ "tu.email as wifidirect_or_bluetooth_name, "
+				+ "gl.id as game_id, gl.game_name, gl.game_package_name "
+				+ "from taqnihome_user tu, game_library gl "
+				+ "where tu.user_id = '" + userConnectionInfo.getUserId() + "' and gl.game_package_name = '"
+				+ userConnectionInfo.getGamePackageName() + "'";
+		
+		GameRequest gameRequestObject = (GameRequest) jdbcTemplateObject.queryForObject(gameRequestQuery, new GameRequestMapper());
+				
+		if(userConnectionInfo.getConnectionInvite() == 2) {
+			NotificationUtil.sendWifiInvitation(pushTokens, gameRequestObject);
+		}
 	}
 	
 	private void sendInvitation(int connectionInvite, List<String> userIds, GameRequest gameRequestObject) {
@@ -300,13 +399,15 @@ public class GameProfileDaoImpl implements GameProfileDao {
 			}
 		});
 
-		String sql = "select u.user_id as user_id, "
+		String sql = "select u.user_id as user_id, (case when gpd.user_id or gpd.connected_user_id is not null then 1 else 0 end) as is_engaged,"
+				+ "(case when gpd.user_id or gpd.connected_user_id is not null then gpd.game_id else 0 end) as active_game_id,"
 				+ "u.name, GROUP_CONCAT(distinct gl.id) as game_id, GROUP_CONCAT(distinct gl.game_name) as game_name, "
 				+ "GROUP_CONCAT(distinct gl.game_image_path) as game_image_path from game_profile gf "
 				+ "inner join game_profile gf1 on gf.game_id = gf1.game_id and gf.user_id <> gf1.user_id "
-				+ "join game_library gl on gl.id = gf.game_id join taqnihome_user u on u.user_id = gf.user_id where "
-				+ "u.user_id in (select u.user_id from taqnihome_user u join user_availability ua on u.user_id = ua.user_id "
-				+ "where ua.availability = 1 and (ua.latitude -  " + latitude + ") < 10 ) "
+				+ "join game_library gl on gl.id = gf.game_id join taqnihome_user u on u.user_id = gf.user_id "
+				+ "left join game_participants_details gpd on u.user_id = gpd.user_id or u.user_id = gpd.connected_user_id "
+				+ "join user_availability ua on u.user_id = ua.user_id "
+				+ "where ua.availability = 1 and (ua.latitude -  " + latitude + " < 10 ) "
 				+ "and gf.game_id in (select gf.game_id from game_profile gf where gf.user_id = '" + userId
 				+ "') and u.user_id <> '" + userId + "' group by u.user_id";
 
@@ -317,6 +418,8 @@ public class GameProfileDaoImpl implements GameProfileDao {
 						UserGameResponse userGameResponse = new UserGameResponse();
 						userGameResponse.setUserId(rs.getString("user_id"));
 						userGameResponse.setUserFirstName(rs.getString("name"));
+						userGameResponse.setIsEngaged(rs.getInt("is_engaged"));
+						userGameResponse.setActiveGame(rs.getLong("active_game_id"));
 
 						List<Long> gameIdList = new ArrayList<>();
 						List<String> gameNameList = new ArrayList<>();
@@ -669,9 +772,24 @@ public class GameProfileDaoImpl implements GameProfileDao {
 		if(queueMap.containsKey(userId)) {
 		List<String> userIds = (List<String>)queueMap.get(userId);
 		for(String id : userIds) {
-			String fetchUserIdToSendRequest = "select game_idgroup_concat(connected_user_id) from game_participants_details where user_id = ?";
+			String fetchUserIdToSendRequest = "select game_id, group_concat(connected_user_id) from game_participants_details where user_id = ?";
 			String requestTobeSentByUserId = (String)jdbcTemplateObject.query(fetchUserIdToSendRequest, new Object[] {userId});
 			sendConnectionInvite(userConnectionInfo);
 		}
+	}
+		
+	public static void main(String args[]) {
+		String sql = "select u.user_id as user_id, (case when gpd.user_id or gpd.connected_user_id is not null then 1 else 0 end) as is_engaged, "
+				+ "u.name, GROUP_CONCAT(distinct gl.id) as game_id, GROUP_CONCAT(distinct gl.game_name) as game_name, "
+				+ "GROUP_CONCAT(distinct gl.game_image_path) as game_image_path from game_profile gf "
+				+ "inner join game_profile gf1 on gf.game_id = gf1.game_id and gf.user_id <> gf1.user_id "
+				+ "join game_library gl on gl.id = gf.game_id join taqnihome_user u on u.user_id = gf.user_id "
+				+ "left join game_participants_details gpd on u.user_id = gpd.user_id or u.user_id = gpd.connected_user_id "
+				+ "join user_availability ua on u.user_id = ua.user_id "
+				+ "where ua.availability = 1 and (ua.latitude -  73 < 10 ) "
+				+ "and gf.game_id in (select gf.game_id from game_profile gf where gf.user_id = '65362ttfnnc cbncb"
+				+ "') and u.user_id <> '65362ttfnnc cbncb' group by u.user_id";
+
+		System.out.println(sql);
 	}
 }
