@@ -21,52 +21,14 @@ import com.taqnihome.request.custom.CustomRequest;
 
 public class NotificationUtil {
 	private static final String serverKey = "AAAAdVay44I:APA91bHog7dyl-BBHqP9_RsgptmG00vyQ7wnTBMGzR1j80kH2SwEaa9SpuRCYviT3GcOGJZKJOOjfj6wToYbmwLO2X_2QVzN_MOHc5qjykOi2KGbpfCJL2FC64CZDySZeshPUrxGCvc-";
-	
-	public static void sendBluetoothInvitation(final List<String> deviceTokens, final GameRequest gameRequestObject) {
+		
+	public static void sendInvitation(final GameRequest gameRequestObject, String[] deviceTokens) {
 		Thread t = new Thread(new Runnable() {
 
 			@Override
 			public void run() {
 				try {
 					for (String deviceToken : deviceTokens) {
-						String messageToSend = new Gson().toJson(gameRequestObject);
-//						JsonObject jsonObject = new JsonObject();
-//						jsonObject.addProperty("remote_user_id", userId);
-//						jsonObject.addProperty("connection_type", 1);
-//						jsonObject.addProperty("bluetooth_address", bluetoothAddress);
-//						jsonObject.addProperty("notification_type", 1 );
-
-						Sender sender = new FCMSender(serverKey);
-						Message message = new Message.Builder().collapseKey("message").timeToLive(3)
-								.delayWhileIdle(true).addData("message", messageToSend).build();
-
-						// Use the same token(or registration id) that was
-						// earlier
-						// used to send the message to the client directly from
-						// Firebase Console's Notification tab.
-						Result result = sender.send(message, deviceToken, 1);
-						System.out.println("Result: " + result.toString());
-					}
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		});
-		t.start();
-		try {
-			t.join();
-		} catch (InterruptedException iex) {
-			iex.printStackTrace();
-		}
-	}
-	
-	public static void sendWifiInvitation(final List<String> deviceTokens, final GameRequest gameRequestObject) {
-		Thread t = new Thread(new Runnable() {
-
-			@Override
-			public void run() {
-				try {
-					for (String deviceToken : deviceTokens) {	
 						String messageToSend = new Gson().toJson(gameRequestObject);
 					
 						Sender sender = new FCMSender(serverKey);

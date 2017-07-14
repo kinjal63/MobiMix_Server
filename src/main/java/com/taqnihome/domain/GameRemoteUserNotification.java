@@ -4,8 +4,17 @@ import java.util.ArrayList;
 
 public class GameRemoteUserNotification {
 
+	private String groupOwnerPushToken;
 	private String groupOwnerUserId;
 	private ArrayList<String> connectedUserIds;
+
+	public String getGroupOwnerPushToken() {
+		return groupOwnerPushToken;
+	}
+
+	public void setGroupOwnerPushToken(String groupOwnerPushToken) {
+		this.groupOwnerPushToken = groupOwnerPushToken;
+	}
 
 	public String getGroupOwnerUserId() {
 		return groupOwnerUserId;

@@ -10,6 +10,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +58,7 @@ public class GameProfileDaoImpl implements GameProfileDao {
 	private DataSource dataSource;
 	private JdbcTemplate jdbcTemplateObject;
 	private HashMap<String, List<String>> queueMap = new HashMap<>();
+	private HashMap<String, List<String>> randomQueue = new HashMap<>();
 
 	@Autowired
 	public void setDataSource(DataSource dataSource) {
@@ -136,10 +138,13 @@ public class GameProfileDaoImpl implements GameProfileDao {
 			}
 		}
 		
-		String gameRequestQuery = "select gpd.user_id as group_owner_user_id,"
+		String gameRequestQuery = "select d.push_token as group_owner_push_token, gpd.user_id as group_owner_user_id,"
 								  + "group_concat(gpd.connected_user_id) as connected_user_ids "
 								  + "from game_participants_details gpd "
 								  + "join game_library gl on gpd.game_id = gl.id "
+								  + "join taqnihome_user tu on tu.user_id = gpd.user_id "
+								  + "join device_details_mapping dm on tu.user_id = dm.user_id " 
+								  + "join device d on dm.device_id = d.device_id "
 								  + "where gl.game_package_name = '" + userConnectionInfo.getGamePackageName() + "' " 
 								  + "and gpd.connected_user_id in " + whereIn + " " 
 								  + "or gpd.user_id in " + whereIn + " " 
@@ -147,54 +152,18 @@ public class GameProfileDaoImpl implements GameProfileDao {
 		
 		GameRemoteUserNotification gameRemoteUserNotification = (GameRemoteUserNotification) jdbcTemplateObject.queryForObject(gameRequestQuery, new GameRemoteUserNotificationMapper());
 		
-		
 		if(gameRemoteUserNotification != null) {
-			sendNotificationToGroupOwner(userConnectionInfo.getUserId(), gameRemoteUserNotification);
-		
-			List<String> userIdToSendNotiList = new ArrayList<>();
-			userIdToSendNotiList.add(gameRemoteUserNotification.getGroupOwnerUserId());
-			
-			for()
-			
-			sendInvitation(userConnectionInfo.getConnectionInvite(), userIdToSendNotiList);
-			if( userConnectionInfo.getConnectionInvite() == 1 ) {
-				gameRequestObject.setNotificationType(1);
-				gameRequestObject.setConnectionType(1);
-			}
-			else {
-				gameRequestObject.setNotificationType(2);
-				gameRequestObject.setConnectionType(2);
-			}
-		}
-
-		whereIn += "'" + userConnectionInfo.getRemoteUserIds().get(0) + "')";
-		
-		List<String> queueUserIds = new ArrayList<>();
-		for (int i = 1; i < size; i++) {
-			queueUserIds.add(userConnectionInfo.getRemoteUserIds().get(i));
+			sendInvitationToGroupOwner(userConnectionInfo, gameRemoteUserNotification);
 		}
 		
-		queueMap.put(userConnectionInfo.getUserId(), queueUserIds);
-
-		sendInvitation(userConnectionInfo.getConnectionInvite(), userConnectionInfo.getRemoteUserIds().get(0), gameRequestObject );
+		else {
+			sendInvitation(userConnectionInfo);			
+		}
+		
 	}
 
-	private void sendNotificationToGroupOwner(UserConnectionInfo userConnectionInfo, GameRemoteUserNotification gameRemoteUser) {
+	private void sendInvitationToGroupOwner(UserConnectionInfo userConnectionInfo, GameRemoteUserNotification gameRemoteUser) {
 		String groupOwnerId = gameRemoteUser.getGroupOwnerUserId();
-		String query = "select d.push_token from taqnihome_user tu join device_details_mapping dm "
-				+ "on tu.user_id = dm.user_id join device d on dm.device_id = d.device_id where tu.user_id = "
-				+ groupOwnerId;
-		String pushToken = (String)jdbcTemplateObject.queryForObject(query, new RowMapper<String>() {
-			@Override
-			public String mapRow(ResultSet rs, int rowNum) throws SQLException {
-				if(rs.next()) {
-					return rs.getString("push_token");
-				}
-				return null;
-			}
-		});
-		List<String> pushTokens = new ArrayList<>();
-		pushTokens.add(pushToken);
 		
 		List<String> usersTobeAddedInQueue = new ArrayList<>();
 		for(String userId : userConnectionInfo.getRemoteUserIds()) {
@@ -203,36 +172,41 @@ public class GameProfileDaoImpl implements GameProfileDao {
 			}
 		}
 		
-		queueMap.put(groupOwnerId, usersTobeAddedInQueue);
-		
-		String gameRequestQuery = "select tu.user_id as remote_user_id, tu.name as remote_user_name, "
-				+ "tu.email as wifidirect_or_bluetooth_name, "
-				+ "gl.id as game_id, gl.game_name, gl.game_package_name "
-				+ "from taqnihome_user tu, game_library gl "
-				+ "where tu.user_id = '" + userConnectionInfo.getUserId() + "' and gl.game_package_name = '"
-				+ userConnectionInfo.getGamePackageName() + "'";
-		
-		GameRequest gameRequestObject = (GameRequest) jdbcTemplateObject.queryForObject(gameRequestQuery, new GameRequestMapper());
-				
-		if(userConnectionInfo.getConnectionInvite() == 2) {
-			NotificationUtil.sendWifiInvitation(pushTokens, gameRequestObject);
+		if(usersTobeAddedInQueue.size() > 0) {
+			queueMap.put(groupOwnerId, usersTobeAddedInQueue);
 		}
+		
+		GameRequest gameRequestObject = getGameRequestObject(userConnectionInfo.getUserId(), userConnectionInfo.getGamePackageName());
+		
+		if(userConnectionInfo.getConnectionInvite() == 2) {
+			gameRequestObject.setConnectionType(2);
+			gameRequestObject.setNotificationType(2);
+		}
+		else if(userConnectionInfo.getConnectionInvite() == 1) {
+			gameRequestObject.setConnectionType(1);
+			gameRequestObject.setNotificationType(1);
+		}
+		NotificationUtil.sendInvitation(gameRequestObject, new String[]{gameRemoteUser.getGroupOwnerPushToken()});
 	}
 	
-	private void sendInvitation(int connectionInvite, List<String> userIds, GameRequest gameRequestObject) {
+	private void sendInvitation(UserConnectionInfo userConnectionInfo) {
+		GameRequest gameRequestObject = getGameRequestObject(userConnectionInfo.getUserId(), userConnectionInfo.getGamePackageName());
+		
 		String whereIn = "";
 		
-		for(int i = 0; i < userIds.size(); i++) {
-			if(i != userIds.size() - 1) {
-				whereIn += "'" + userIds.get(i) + "',";
+		List<String> remoteUserIds = userConnectionInfo.getRemoteUserIds();
+		for(int i = 0; i < remoteUserIds.size(); i++) {
+			if(i != remoteUserIds.size() - 1) {
+				whereIn += "'" + remoteUserIds.get(i) + "',";
 			}
 			else {
-				whereIn += "'" + userIds.get(i) + "')";
+				whereIn += "'" + remoteUserIds.get(i) + "'";
 			}
 		}
+		randomQueue.put(userConnectionInfo.getUserId(), remoteUserIds);
 		
 		String idQuery = "select d.push_token from taqnihome_user tu join device_details_mapping dm "
-				+ "on tu.user_id = dm.user_id join device d on dm.device_id = d.device_id where tu.user_id in (" + whereIn;
+				+ "on tu.user_id = dm.user_id join device d on dm.device_id = d.device_id where tu.user_id in (" + whereIn + ")";
 
 		List<String> deviceTokens = (List<String>) jdbcTemplateObject.query(idQuery, new RowMapper<String>() {
 			@Override
@@ -240,15 +214,32 @@ public class GameProfileDaoImpl implements GameProfileDao {
 				return rs.getString(1);
 			}
 		});
-		if( connectionInvite == 2 ) {
-			NotificationUtil.sendWifiInvitation(deviceTokens, gameRequestObject);	
+		if( userConnectionInfo.getConnectionInvite() == 2 ) {
+			gameRequestObject.setConnectionType(2);
+			gameRequestObject.setNotificationType(2);
+		
 		}
-		else {
-			NotificationUtil.sendBluetoothInvitation(deviceTokens, gameRequestObject);
+		else if( userConnectionInfo.getConnectionInvite() == 1 ) {
+			gameRequestObject.setConnectionType(1);
+			gameRequestObject.setNotificationType(1);
+		
 		}
-
+		NotificationUtil.sendInvitation(gameRequestObject, (String[])deviceTokens.toArray());
 	}
 
+	private GameRequest getGameRequestObject(String userId, String gamePackageName) {
+		String gameRequestQuery = "select tu.user_id as remote_user_id, tu.name as remote_user_name, "
+				+ "tu.email as wifidirect_or_bluetooth_name, "
+				+ "gl.id as game_id, gl.game_name, gl.game_package_name "
+				+ "from taqnihome_user tu, game_library gl "
+				+ "where tu.user_id = '" + userId + "' and gl.game_package_name = '"
+				+ gamePackageName + "'";
+		
+		GameRequest gameRequestObject = (GameRequest) jdbcTemplateObject.queryForObject(gameRequestQuery, new GameRequestMapper());
+		
+		return gameRequestObject;
+	}
+	
 	@Override
 	public void sendRemoteUserInput(UserInput input) {
 		String idQuery = "select d.push_token from taqnihome_user tu join device_details_mapping dm "
@@ -770,11 +761,18 @@ public class GameProfileDaoImpl implements GameProfileDao {
 	
 	private void pullQueueIfUserExists(String userId, String connectedUserId) {
 		if(queueMap.containsKey(userId)) {
-		List<String> userIds = (List<String>)queueMap.get(userId);
-		for(String id : userIds) {
-			String fetchUserIdToSendRequest = "select game_id, group_concat(connected_user_id) from game_participants_details where user_id = ?";
-			String requestTobeSentByUserId = (String)jdbcTemplateObject.query(fetchUserIdToSendRequest, new Object[] {userId});
-			sendConnectionInvite(userConnectionInfo);
+			List<String> userIds = (List<String>)queueMap.get(userId);
+			for(String id : userIds) {
+				String fetchUserIdToSendRequest = "select game_id, group_concat(connected_user_id) from game_participants_details where user_id = ?";
+				String requestTobeSentByUserId = (String)jdbcTemplateObject.queryForObject(fetchUserIdToSendRequest, 
+						new Object[] {userId}, new RowMapper<String>() {
+					@Override
+					public String mapRow(ResultSet rs, int rowNum) throws SQLException {
+						return rs.getString("");
+					}
+				});
+	//			sendConnectionInvite(userConnectionInfo);
+			}
 		}
 	}
 		
